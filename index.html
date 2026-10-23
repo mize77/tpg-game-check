@@ -1487,7 +1487,7 @@ function bindAuth(){
     try{
       if(mode==="in"){ if(!pw) return say("Enter your password.",true); const {error}=await sb.auth.signInWithPassword({email,password:pw}); if(error) return say(/confirm/i.test(error.message)?"Confirm your email first: open the link in the email you received, then sign in here.":"That email and password don’t match. Try again or reset your password.",true); AUTH_MSG=null; }
       else if(mode==="up"){ if(pw.length<8) return say("Use at least 8 characters for the password.",true); if(pw!==$("#au_pw2").value) return say("The two passwords don’t match.",true);
-        const {data,error}=await sb.auth.signUp({email,password:pw,options:{emailRedirectTo:SITE_URL}}); if(error) return say(error.message,true);
+        const {data,error}=await sb.auth.signUp({email,password:pw,options:{emailRedirectTo:SITE_URL}}); if(error){ if(/already registered|already exists/i.test(error.message)){ UI.authMode="in"; return say("This email already has an account. Sign in with its password, or use Forgot password to set a new one.",true); } return say(error.message,true); }
         if(!data.session){ UI.authMode="in"; return say("Account created. Open the confirmation link in the email we sent, then sign in here."); } AUTH_MSG=null; }
       else { const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:SITE_URL}); if(error) return say(error.message,true); UI.authMode="in"; return say("If that email has an account, a reset link is on its way."); }
     }catch(err){ return say("No connection to the sign-in service. Check the connection and try again.",true); }
