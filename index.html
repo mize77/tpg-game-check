@@ -1457,39 +1457,53 @@ function markBanner(d){
 /* ---------------- SIGN IN ---------------- */
 let AUTH_MSG=null;
 function authView(){
-  const mode=UI.authMode||"in";
-  const title=mode==="up"?"Create account":mode==="reset"?"Reset password":"Sign in";
+  const mode=UI.authMode||"code";   // "code" (emailed code, like XquiX Studio) | "pw"
+  const sent=mode==="code"&&UI.codeSent;
   return `<main class="gutter"><div class="auth">
     <img class="logo" src="icons/logo.png" alt="The Perfect Goalie">
-    <h1>Game Video Check</h1><div class="sub">${esc(title)} with your Game Check account</div>
+    <h1>Game Video Check</h1><div class="sub">Sign in with your Game Check account</div>
     ${!sb?`<div class="msg err">The sign-in service didn’t load. Check the connection and reload.</div>`:""}
     ${AUTH_MSG?`<div class="msg ${AUTH_MSG.err?"err":""}">${esc(AUTH_MSG.text)}</div>`:""}
     <form id="authform" class="stack" novalidate>
-      <div><label class="f" for="au_email">Email</label><input id="au_email" type="email" autocomplete="username" inputmode="email" value="${esc(UI.authEmail||"")}" required></div>
-      ${mode!=="reset"?`<div><label class="f" for="au_pw">Password</label><input id="au_pw" type="password" autocomplete="${mode==="up"?"new-password":"current-password"}" minlength="8" required></div>`:""}
-      ${mode==="up"?`<div><label class="f" for="au_pw2">Repeat password</label><input id="au_pw2" type="password" autocomplete="new-password" minlength="8" required></div>`:""}
-      <button class="btn primary block" type="submit" id="au_go">${mode==="up"?"Create account":mode==="reset"?"Send reset link":"Sign in"}</button>
+      <div><label class="f" for="au_email">Email</label><input id="au_email" type="email" autocomplete="username" inputmode="email" value="${esc(UI.authEmail||"")}" ${sent?"readonly":""} required></div>
+      ${mode==="pw"?`<div><label class="f" for="au_pw">Password</label><input id="au_pw" type="password" autocomplete="current-password" required></div>`:""}
+      ${sent?`<div><label class="f" for="au_code">Code from the email</label><input id="au_code" inputmode="numeric" autocomplete="one-time-code" maxlength="10" style="font-size:24px;letter-spacing:.3em;text-align:center" required></div>`:""}
+      <button class="btn primary block" type="submit" id="au_go">${mode==="pw"?"Sign in":sent?"Sign in":"Email me a code"}</button>
     </form>
     <div class="row" style="justify-content:space-between">
-      ${mode!=="in"?`<button class="linkbtn" data-am="in">Back to sign in</button>`:`<button class="linkbtn" data-am="up">Create account</button><button class="linkbtn" data-am="reset">Forgot password?</button>`}
+      ${sent?`<button class="linkbtn" data-am="resend">Send a new code</button><button class="linkbtn" data-am="other">Use another email</button>`
+        :mode==="pw"?`<button class="linkbtn" data-am="code">Sign in with an email code instead</button>`
+        :`<span class="note">Same sign-in as the XquiX Studio app.</span><button class="linkbtn" data-am="pw">Use a password</button>`}
     </div>
   </div></main>`;
 }
+async function sendCode(email){
+  const {error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:false}});
+  if(error){ AUTH_MSG={text:/not found|signups not allowed|not allowed/i.test(error.message)?"There’s no account with this email.":/rate|seconds|security purposes/i.test(error.message)?"A code was just sent. Wait a minute before asking for a new one.":error.message,err:true}; return false; }
+  return true;
+}
 function bindAuth(){
   const app=$("#app");
-  app.onclick=e=>{ const b=e.target.closest("[data-am]"); if(b){ UI.authEmail=($("#au_email")||{}).value||UI.authEmail; UI.authMode=b.dataset.am; AUTH_MSG=null; render(); } };
+  app.onclick=async e=>{ const b=e.target.closest("[data-am]"); if(!b) return; const k=b.dataset.am;
+    const em=($("#au_email")||{}).value; if(em) UI.authEmail=em.trim();
+    if(k==="code"||k==="pw"){ UI.authMode=k; UI.codeSent=false; AUTH_MSG=null; render(); }
+    if(k==="other"){ UI.codeSent=false; AUTH_MSG=null; render(); }
+    if(k==="resend"){ if(await sendCode(UI.authEmail)) AUTH_MSG={text:"A new code is on its way."}; render(); }
+  };
   $("#authform").onsubmit=async e=>{
     e.preventDefault(); if(!sb) return;
-    const mode=UI.authMode||"in", email=$("#au_email").value.trim(), pw=($("#au_pw")||{}).value||"";
+    const mode=UI.authMode||"code", email=$("#au_email").value.trim();
     UI.authEmail=email; const go=$("#au_go"); go.disabled=true; go.textContent="One moment…";
     const say=(text,err)=>{ AUTH_MSG={text,err}; render(); };
     if(!email) return say("Enter your email address.",true);
     try{
-      if(mode==="in"){ if(!pw) return say("Enter your password.",true); const {error}=await sb.auth.signInWithPassword({email,password:pw}); if(error) return say(/confirm/i.test(error.message)?"Confirm your email first: open the link in the email you received, then sign in here.":"That email and password don’t match. Try again or reset your password.",true); AUTH_MSG=null; }
-      else if(mode==="up"){ if(pw.length<8) return say("Use at least 8 characters for the password.",true); if(pw!==$("#au_pw2").value) return say("The two passwords don’t match.",true);
-        const {data,error}=await sb.auth.signUp({email,password:pw,options:{emailRedirectTo:SITE_URL}}); if(error){ if(/already registered|already exists/i.test(error.message)){ UI.authMode="in"; return say("This email already has an account. Sign in with its password, or use Forgot password to set a new one.",true); } return say(error.message,true); }
-        if(!data.session){ UI.authMode="in"; return say("Account created. Open the confirmation link in the email we sent, then sign in here."); } AUTH_MSG=null; }
-      else { const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:SITE_URL}); if(error) return say(error.message,true); UI.authMode="in"; return say("If that email has an account, a reset link is on its way."); }
+      if(mode==="pw"){ const pw=$("#au_pw").value; if(!pw) return say("Enter your password.",true);
+        const {error}=await sb.auth.signInWithPassword({email,password:pw}); if(error) return say("That email and password don’t match. Sign in with an email code instead.",true); AUTH_MSG=null; UI.codeSent=false; return; }
+      if(!UI.codeSent){ if(await sendCode(email)){ UI.codeSent=true; AUTH_MSG={text:"We emailed you a sign-in code. Enter it below."}; } render(); return; }
+      const token=($("#au_code").value||"").replace(/\s/g,""); if(!token) return say("Enter the code from the email.",true);
+      const {error}=await sb.auth.verifyOtp({email,token,type:"email"});
+      if(error) return say("That code isn’t right or has expired. Check the latest email, or send a new code.",true);
+      AUTH_MSG=null; UI.codeSent=false;
     }catch(err){ return say("No connection to the sign-in service. Check the connection and try again.",true); }
   };
 }
