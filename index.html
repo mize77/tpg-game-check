@@ -1,0 +1,1595 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Game Video Check</title>
+<meta name="description" content="The Perfect Goalie Game Video Check">
+<meta name="theme-color" content="#262535">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Game Check">
+<meta name="robots" content="noindex,nofollow">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap">
+<style>
+
+/* page base (what the artifact viewer used to provide) */
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;-webkit-text-size-adjust:100%}
+img{max-width:100%}
+[hidden]{display:none!important}
+/* hosted additions */
+.inboxbtn{position:relative}
+.badge{position:absolute;top:2px;right:0;min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:9px;background:var(--gold);color:#262535;font:800 11px/18px var(--body);text-align:center}
+.markcard{background:var(--tile);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.markcard .when{font-family:var(--display);font-weight:800;font-size:20px;font-variant-numeric:tabular-nums}
+.markcard .what{font-weight:600;line-height:1.3}
+.markcard .meta{font-size:14px;color:var(--muted);line-height:1.35}
+.markinfo{background:#FFF7CC;color:#4A3F00;border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.4;margin-bottom:12px}
+.markinfo b{color:#262535}
+.auth{max-width:420px;margin:0 auto;padding-block:40px 40px;display:flex;flex-direction:column;gap:14px}
+.auth .logo{width:110px;margin:0 auto 6px}
+.auth h1{font-family:var(--display);font-weight:800;font-size:30px;text-transform:uppercase;text-align:center;line-height:1}
+.auth .sub{text-align:center;color:var(--muted);margin-top:-6px}
+.msg{border-radius:10px;padding:10px 12px;font-size:14px;line-height:1.4;background:var(--tint);color:var(--fg)}
+.msg.err{background:#FDE7E4;color:#7A1F17}
+.linkbtn{color:var(--teal-ink);font-weight:700;text-decoration:underline;padding:6px 0}
+.cloud{display:flex;gap:10px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line)}
+.dot{width:10px;height:10px;border-radius:50%;margin-top:5px;flex:none;background:var(--muted)}
+.dot.ok{background:var(--ok)} .dot.warn{background:#E0A800} .dot.bad{background:var(--danger)}
+/* Layout: one-thumb field tool — sticky compact header, scrolling content, fixed bottom bar with a big +SCENE; scene entry is a full-screen step sheet. */
+:root{
+  --navy:#262535; --teal:#1ECECB; --teal-ink:#0B8481; --gold:#FDDC01;
+  --bg:#FFFFFF; --surface:#F3F6F8; --tile:#FFFFFF; --line:#D9E1E6; --fg:#262535; --muted:#5D6573;
+  --tint:#E6F8F8; --sel:#262535; --sel-fg:#FFFFFF; --danger:#C2362B; --ok:#1F8A5B;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Barlow",-apple-system,"Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#17161F; --surface:#201F2B; --tile:#262535; --line:#3A3949; --fg:#EEF1F4; --muted:#A3A8B5;
+  --tint:#12393A; --sel:#1ECECB; --sel-fg:#17161F; --teal-ink:#4FDCD9; --danger:#FF7A6E; --ok:#5BD08F; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#17161F; --surface:#201F2B; --tile:#262535; --line:#3A3949; --fg:#EEF1F4; --muted:#A3A8B5;
+  --tint:#12393A; --sel:#1ECECB; --sel-fg:#17161F; --teal-ink:#4FDCD9; --danger:#FF7A6E; --ok:#5BD08F; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--navy)}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+input,textarea,select{font:inherit;color:var(--fg);background:var(--tile);border:1px solid var(--line);border-radius:10px;padding:12px;width:100%;box-sizing:border-box;font-size:16px}
+textarea{min-height:84px;resize:vertical;line-height:1.4}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--teal);outline-offset:0;border-color:transparent}
+button:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.gutter{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.app{min-height:100%;display:flex;flex-direction:column}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--navy);color:#fff;padding-block:10px}
+.toprow{display:flex;align-items:center;gap:10px}
+.toprow img{width:30px;height:auto;flex:none}
+.toprow .t{flex:1;min-width:0}
+.eyebrow{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--display);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:12px;color:var(--teal)}
+.athlete{font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:.02em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.05}
+.iconbtn{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;color:#fff;flex:none}
+.iconbtn svg{width:22px;height:22px}
+.gamesel{margin-top:8px;display:flex;gap:8px;align-items:center}
+.gamesel select{background:#34334A;color:#fff;border:0;padding:9px 12px;font-weight:600;border-radius:9px}
+.sync{font-size:11px;color:#B9BCD0;white-space:nowrap}
+main{flex:1;padding-block:16px 120px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+h2{font-size:24px;font-weight:800;text-transform:uppercase;letter-spacing:.02em}
+.muted{color:var(--muted)}
+.stack{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{min-height:50px;padding:0 18px;border-radius:12px;font-weight:700;font-family:var(--display);font-size:19px;letter-spacing:.05em;text-transform:uppercase;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn.primary{background:var(--teal);color:#16151F}
+.btn.navy{background:var(--navy);color:#fff}
+:root[data-theme="dark"] .btn.navy{background:#3A3949}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn.navy{background:#3A3949}}
+.btn.ghost{border:1.5px solid var(--line);background:var(--tile)}
+.btn.danger{background:var(--danger);color:#fff}
+.btn.block{width:100%}
+.btn.sm{min-height:40px;font-size:16px;padding:0 12px}
+.card{background:var(--tile);border:1px solid var(--line);border-radius:14px;padding:14px}
+.checkitem{display:flex;gap:12px;align-items:center;text-align:left;width:100%}
+.checkitem .meta{font-size:14px;color:var(--muted);margin-top:2px}
+.pill{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 8px;border-radius:999px;white-space:nowrap}
+.pill.prog{background:var(--tint);color:var(--teal-ink)}
+.pill.review{background:#FFF3B8;color:#6B5900}
+.pill.final{background:var(--navy);color:#fff}
+:root[data-theme="dark"] .pill.final{background:#3A3949}
+.hero{display:flex;align-items:center;gap:14px;padding-block:6px 4px}
+.hero img{width:64px}
+.hero .h{font-family:var(--display);font-weight:800;font-size:30px;line-height:.95;text-transform:uppercase}
+label.f{display:block;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:6px;letter-spacing:.04em;text-transform:uppercase}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid2>*{min-width:0}
+.sect{font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal-ink);margin:18px 0 8px}
+/* bottom bar */
+nav.bottom{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--bg);border-top:1px solid var(--line);padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));padding-top:8px;padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px,env(safe-area-inset-right,0px))}
+.bb{display:grid;grid-template-columns:1fr 1fr 1.5fr 1fr 1fr;gap:6px;align-items:center;max-width:640px;margin:0 auto}
+.tab{min-height:52px;border-radius:12px;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.tab svg{width:22px;height:22px}
+.tab.on{color:var(--fg);background:var(--surface)}
+.addscene{min-height:58px;border-radius:16px;background:var(--teal);color:#16151F;font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:.04em}
+/* scene list */
+.gamehead{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:18px 0 8px}
+.gamehead h3{font-size:17px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.srow{position:relative;overflow:hidden;border-radius:12px;background:var(--danger)}
+.srow .actions{position:absolute;inset:0 0 0 auto;display:flex}
+.srow .actions button{width:88px;color:#fff;font-weight:700;font-size:14px}
+.srow .actions .dup{background:var(--navy)}
+:root[data-theme="dark"] .srow .actions .dup{background:#3A3949}
+.srow .actions .del{background:var(--danger)}
+.sbody{position:relative;background:var(--tile);border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;grid-template-columns:62px 1fr auto;gap:10px;align-items:start;transition:transform .18s ease;touch-action:pan-y;text-align:left;width:100%}
+.ts{font-family:var(--display);font-weight:800;font-size:22px;font-variant-numeric:tabular-nums;line-height:1}
+.sline{font-weight:600;line-height:1.25}
+.ssub{font-size:14px;color:var(--muted);margin-top:2px;line-height:1.3}
+.tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.tg{font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:3px 6px;border-radius:6px;background:var(--surface);color:var(--muted);text-transform:uppercase}
+.tg.o{background:var(--tint);color:var(--teal-ink)}
+.tg.out{background:var(--navy);color:#fff}
+.tg.goal{background:#FDE7E4;color:#9A2A20}
+.tg.x{background:#FFF3B8;color:#6B5900}
+.tg.off{text-decoration:line-through}
+.vmini{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;color:var(--teal-ink);text-decoration:none;padding:3px 7px;border-radius:6px;background:var(--tint)}
+.more{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:var(--muted)}
+.empty{text-align:center;padding:36px 12px;color:var(--muted)}
+.empty .big{font-family:var(--display);font-size:22px;font-weight:800;color:var(--fg);text-transform:uppercase}
+.quick{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.quick button{white-space:nowrap}
+/* sheet */
+.sheet{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+.shead{background:var(--navy);color:#fff;padding-block:10px 12px}
+.shead .row{flex-wrap:nowrap}
+.steps{display:flex;gap:4px;margin-top:10px}
+.steps button{flex:1;height:30px;border-radius:7px;background:#34334A;color:#B9BCD0;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.steps button.on{background:var(--teal);color:#16151F}
+.steps button.done{background:#46455E;color:#fff}
+.summary{font-size:13px;color:#D6D8E4;margin-top:8px;line-height:1.35;min-height:18px}
+.summary b{color:var(--teal);font-variant-numeric:tabular-nums}
+.sbody2{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-block:14px 24px}
+.sfoot{border-top:1px solid var(--line);padding-top:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:1fr 1.3fr 1.3fr;gap:8px;background:var(--bg)}
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.tiles.three{grid-template-columns:repeat(3,1fr)}
+.tiles.four{grid-template-columns:repeat(4,1fr)}
+.tl{min-height:56px;border-radius:12px;background:var(--tile);border:1.5px solid var(--line);font-weight:600;font-size:16px;line-height:1.15;padding:8px 10px;text-align:center;position:relative}
+.tl.on{background:var(--sel);color:var(--sel-fg);border-color:var(--sel)}
+.tl .ord{position:absolute;top:4px;right:6px;font-size:11px;font-weight:800;opacity:.85}
+.tl.big{min-height:68px;font-family:var(--display);font-size:21px;font-weight:800;letter-spacing:.03em;text-transform:uppercase}
+.tl.goal.on{background:#C2362B;border-color:#C2362B;color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{min-height:42px;padding:6px 13px;border-radius:999px;background:var(--tile);border:1.5px solid var(--line);font-weight:600;font-size:15px;line-height:1.15}
+.chip.on{background:var(--sel);color:var(--sel-fg);border-color:var(--sel)}
+.chip.fav{border-style:dashed;border-color:var(--teal-ink);color:var(--teal-ink)}
+.grp{border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--tile)}
+.grp>button{width:100%;display:flex;justify-content:space-between;align-items:center;padding:13px 14px;font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:.08em;text-transform:uppercase}
+.grp>button .n{font-family:var(--body);font-size:12px;background:var(--teal);color:#16151F;border-radius:999px;padding:2px 8px;letter-spacing:0}
+.grp .in{padding:0 12px 12px}
+/* timestamp */
+.tsbig{font-family:var(--display);font-weight:800;font-size:76px;text-align:center;font-variant-numeric:tabular-nums;letter-spacing:.02em;line-height:1;padding:10px 0}
+.tsbig .c{color:var(--teal-ink)}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:380px;margin:0 auto}
+.keypad button{height:62px;border-radius:14px;background:var(--surface);font-size:28px;font-weight:600;font-variant-numeric:tabular-nums}
+.keypad button.fn{font-size:17px;font-weight:700;font-family:var(--display);letter-spacing:.05em}
+.adj{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:380px;margin:0 auto 12px}
+/* goal grid */
+.goalgrid{max-width:340px;margin:0 auto;border:5px solid var(--fg);border-bottom:0;border-radius:4px 4px 0 0;display:grid;grid-template-columns:repeat(3,1fr);background:repeating-linear-gradient(45deg,transparent 0 9px,var(--line) 9px 10px),repeating-linear-gradient(-45deg,transparent 0 9px,var(--line) 9px 10px)}
+.goalgrid button{height:62px;border:1px dashed var(--line);font-size:13px;font-weight:700;color:var(--muted);background:transparent}
+.goalgrid button.on{background:var(--teal);color:#16151F}
+.water{max-width:350px;margin:0 auto;height:6px;background:var(--teal);border-radius:3px;opacity:.6}
+.gridcap{text-align:center;font-size:12px;color:var(--muted);margin-top:6px}
+.sugg{background:var(--tint);border-radius:10px;padding:10px 12px;font-size:15px;line-height:1.4;margin-bottom:8px}
+.sugg .h{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--teal-ink);margin-bottom:4px}
+.fbl{font-family:var(--display);font-weight:800;font-size:17px;letter-spacing:.12em;text-transform:uppercase;margin:16px 0 6px;color:var(--teal-ink)}
+.otype{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
+.seg{display:inline-flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;flex:none}
+.seg button{padding:7px 10px;font-size:12px;font-weight:700;letter-spacing:.05em}
+.seg button.on{background:var(--sel);color:var(--sel-fg)}
+.switch{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.switch input{width:auto;transform:scale(1.4)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:70;background:var(--navy);color:#fff;border-radius:12px;padding:12px 14px;display:flex;gap:14px;align-items:center;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:calc(100% - 32px);font-weight:600}
+.toast button{color:var(--teal);font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+.modal{position:fixed;inset:0;z-index:80;background:rgba(15,15,25,.55);display:flex;align-items:flex-end;justify-content:center}
+.modal .box{background:var(--bg);width:100%;max-width:560px;border-radius:18px 18px 0 0;padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));max-height:86vh;overflow-y:auto}
+.modal h3{font-size:22px;font-weight:800;text-transform:uppercase;margin-bottom:12px}
+.menu button{display:block;width:100%;text-align:left;padding:15px 4px;border-bottom:1px solid var(--line);font-weight:600;font-size:17px}
+/* preview */
+.thumbs{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.thumb{background:#fff;border:1px solid var(--line);border-radius:6px;overflow:hidden;position:relative}
+.thumb canvas{display:block;width:100%;height:auto}
+.thumb .pn{position:absolute;left:6px;bottom:6px;background:var(--navy);color:#fff;font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px}
+.catrow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.catrow .nm{font-weight:700;min-width:0}
+.pscene{display:grid;grid-template-columns:52px 1fr;gap:8px;padding:9px 0;border-top:1px dashed var(--line);align-items:start}
+.pscene .ctl{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.bigview{position:fixed;inset:0;z-index:90;background:rgba(15,15,25,.92);overflow:auto;padding:calc(56px + env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) 24px max(12px,env(safe-area-inset-left,0px))}
+.bigview canvas{width:100%;max-width:760px;display:block;margin:0 auto;background:#fff}
+.bigview .x{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:max(12px,env(safe-area-inset-right,0px));width:44px;height:44px;border-radius:12px;background:var(--teal);color:#16151F;font-size:24px;font-weight:800}
+.note{font-size:14px;color:var(--muted);line-height:1.4}
+@media (min-width:640px){.tiles{grid-template-columns:repeat(3,1fr)}.thumbs{grid-template-columns:repeat(3,1fr)}main,.sbody2>div{max-width:640px;margin:0 auto;width:100%}}
+/* PRESENT MODE — Mac / Zoom screen share. One committed light look in TPG colors, independent of the app theme. */
+.pres{position:fixed;inset:0;z-index:100;background:#FFFFFF;color:#262535;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;font-family:var(--body);color-scheme:light}
+.pres .pbar{display:flex;align-items:center;gap:18px;padding:14px max(28px,env(safe-area-inset-right,0px)) 14px max(28px,env(safe-area-inset-left,0px));border-bottom:1px solid #DDE7EA}
+.pres .pbar img{height:42px;width:auto}
+.pres .who{flex:1;min-width:0}
+.pres .who .e{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:#0B8481}
+.pres .who .n{font-family:var(--display);font-weight:800;font-size:24px;text-transform:uppercase;letter-spacing:.02em;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pres .count{font-family:var(--display);font-weight:700;font-size:18px;color:#5D6573;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pres .pbtn{height:42px;padding:0 16px;border-radius:10px;border:1.5px solid #DDE7EA;background:#fff;color:#262535;font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.pres .pbtn:hover{border-color:#1ECECB}
+.pres .stage{overflow:auto;padding:clamp(20px,3.2vw,48px) max(clamp(24px,4vw,64px),env(safe-area-inset-right,0px)) 24px max(clamp(24px,4vw,64px),env(safe-area-inset-left,0px));min-height:0}
+.pres .slide{max-width:1500px;margin:0 auto;min-height:100%;display:flex;flex-direction:column}
+.pres .catname{font-family:var(--display);font-weight:700;font-size:clamp(15px,1.3vw,20px);letter-spacing:.16em;text-transform:uppercase;color:#0B8481;display:flex;align-items:center;gap:12px}
+.pres .catname::after{content:"";height:2px;width:56px;background:#1ECECB}
+.pres .phead{display:flex;align-items:baseline;gap:clamp(14px,2vw,28px);flex-wrap:wrap;margin:10px 0 clamp(16px,2.2vw,30px)}
+.pres .bigts{font-family:var(--display);font-weight:800;font-size:clamp(56px,7.4vw,112px);line-height:.9;font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.pres .tslink{color:#262535;text-decoration:none;display:inline-flex;align-items:baseline;gap:.18em;border-bottom:4px solid #1ECECB}
+.pres .tslink:hover{color:#0B8481}
+.pres .tsplay{font-size:.32em;color:#0B8481;transform:translateY(-.9em)}
+.pres .hl{font-family:var(--display);font-weight:700;font-size:clamp(26px,2.9vw,46px);line-height:1.05;text-wrap:balance;min-width:0;flex:1}
+.pres .gtag{display:inline-block;background:#262535;color:#fff;font-family:var(--display);font-weight:700;font-size:clamp(14px,1.1vw,18px);letter-spacing:.08em;padding:5px 11px;border-radius:7px;vertical-align:middle}
+.pres .cols{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(20px,3vw,48px);align-items:start}
+.pres .facts{background:#E8F8F8;border-radius:14px;padding:clamp(16px,1.8vw,26px)}
+.pres .facts h4,.pres .blk h4{margin:0 0 10px;font-family:var(--display);font-weight:800;font-size:clamp(14px,1.1vw,17px);letter-spacing:.16em;text-transform:uppercase;color:#0B8481}
+.pres .facts ul{margin:0;padding-left:1.1em;font-size:clamp(17px,1.45vw,23px);line-height:1.45}
+.pres .facts li{margin:3px 0}
+.pres .vlink{display:inline-flex;align-items:center;gap:8px;margin-top:16px;height:44px;padding:0 16px;border-radius:10px;background:#262535;color:#fff;text-decoration:none;font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:.06em;text-transform:uppercase}
+.pres .vlink:hover{background:#3A3949}
+.pres .blk{padding:4px 0 clamp(14px,1.6vw,22px);border-bottom:1px solid #E3ECEE;margin-bottom:clamp(14px,1.6vw,22px)}
+.pres .blk:last-child{border-bottom:0}
+.pres .blk p{margin:0 0 6px;font-size:var(--pfs,clamp(20px,1.75vw,28px));line-height:1.4;max-width:62ch}
+.pres .blk.q p{font-weight:700;font-style:italic}
+.pres .blk.x{background:#FFFBE0;border:0;border-radius:12px;padding:14px 18px}
+.pres .blk.x h4{color:#6B5900}
+.pres .cover{align-items:center;justify-content:center;text-align:center;gap:14px}
+.pres .cover img{height:clamp(140px,22vh,240px);width:auto}
+.pres .cover .nm{font-family:var(--display);font-weight:800;font-size:clamp(48px,6.4vw,96px);text-transform:uppercase;line-height:.95;letter-spacing:.01em}
+.pres .cover .sub{font-family:var(--display);font-weight:700;font-size:clamp(18px,1.8vw,28px);letter-spacing:.24em;color:#0B8481;text-transform:uppercase}
+.pres .cover .gm{font-size:clamp(17px,1.5vw,24px);line-height:1.5;color:#262535}
+.pres .cover .gm span{color:#5D6573}
+.pres .chap{justify-content:center}
+.pres .chap .t{font-family:var(--display);font-weight:800;font-size:clamp(44px,5.4vw,84px);line-height:1;text-wrap:balance;margin:12px 0 26px}
+.pres .chap .list{display:flex;flex-wrap:wrap;gap:10px}
+.pres .chap .list button{font-family:var(--display);font-weight:700;font-size:clamp(18px,1.6vw,26px);font-variant-numeric:tabular-nums;padding:10px 16px;border-radius:10px;background:#E8F8F8;color:#262535;text-align:left}
+.pres .chap .list button small{display:block;font-family:var(--body);font-weight:500;font-size:clamp(12px,.95vw,15px);color:#5D6573;max-width:24ch;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pres .chap .list button:hover{background:#1ECECB}
+.pres .pfoot{display:flex;align-items:center;gap:12px;padding:12px max(28px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(28px,env(safe-area-inset-left,0px));border-top:1px solid #DDE7EA}
+.pres .chips2{flex:1;display:flex;gap:6px;overflow-x:auto;min-width:0;scrollbar-width:none}
+.pres .chips2 button{white-space:nowrap;height:34px;padding:0 12px;border-radius:999px;border:1.5px solid #DDE7EA;background:#fff;color:#5D6573;font-weight:600;font-size:13px}
+.pres .chips2 button.on{background:#262535;border-color:#262535;color:#fff}
+.pres .nav{width:54px;height:46px;border-radius:12px;background:#1ECECB;color:#16151F;font-size:24px;font-weight:800}
+.pres .nav:disabled{opacity:.3}
+.pres .keys{font-size:12px;color:#8A90A0;white-space:nowrap}
+.pres :focus-visible{outline:3px solid #1ECECB;outline-offset:2px}
+@media (max-width:820px){.pres .cols{grid-template-columns:1fr}.pres .keys{display:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div id="app" class="app"></div>
+<div id="layer"></div>
+
+<script src="vendor/supabase.js"></script>
+<script>
+"use strict";
+const LOGO = "data:image/png;base64,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";
+const STORE_KEY = "tpg_gvc_v1";
+const uid = () => Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
+const esc = s => String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $ = (s,r=document)=>r.querySelector(s);
+const now = () => new Date().toISOString();
+
+/* ---------------- vocabulary ---------------- */
+const SITUATIONS = ["Regular Defense","Press Defense","Zone Defense","Counter Defense","5 vs 6","Penalty","Center Situation","Counter Offense","Outlet Pass","Transition","Other"];
+const SPECIFIC = {
+  "Zone Defense":["Zone 1","Zone 2","Zone 3","Zone 4","Zone 5","Zone 1–2","Zone 2–3","Zone 3–4","Zone 4–5","Zone 3–4–5","Drop from 1","Drop from 5","Multiple / Changing"],
+  "5 vs 6":["Shot from 1","Shot from 2","Shot from 3","Shot from 4","Shot from 5","Shot from 6","Post finish","Cross pass","Quick finish","Rebound","No shot"],
+  "Center Situation":["Entry pass","Post-up","Forehand turn","Backhand turn","Step-out","1 vs Goalie","Exclusion","Penalty foul","Steal","No shot"],
+  "Counter Defense":["Breakaway","1 vs 0","2 vs 1","Center entry","Long outlet","Transition into press","Transition into zone"],
+  "Counter Offense":["Outlet left","Outlet right","Outlet center","Lead pass","Wet pass","Dry pass","Long pass","Short pass","No pass"],
+};
+SPECIFIC["Outlet Pass"]=SPECIFIC["Counter Offense"];
+SPECIFIC["Transition"]=SPECIFIC["Counter Defense"];
+const POSITIONS=["1","2","3","4","5","6","Center"];
+const DISTANCES=["2m","3m","4m","5m","6m","7m","8m","9m+","Unknown"];
+const SHOT_TYPES=["Direct","Catch & Shoot","Skip","Lob","Quick Finish","Turn","Rebound","Penalty","Other"];
+const GRID_V=["High","Middle","Low"], GRID_H=["Left","Center","Right"];
+const SHOT_EXTRA=["Post","Over Goal","Wide","Blocked before goal"];
+const OUTCOMES=["GOAL","BLOCK","BLOCK + CONTROL","BLOCK + REBOUND","MISS","POST","DEFENDER BLOCK","STEAL","NO SHOT","OTHER"];
+const CONTROL_DETAIL=["Clean catch/control","Smash down","Flick out","Controlled rebound","Other"];
+// type: O = observation, F = focus (default; coach can flip per scene)
+const ACTIONS = [
+ ["POSITIONING","pos",[["Good goal position","O"],["Near-side heavy","O"],["Far-side heavy","O"],["Too deep","O"],["Too far out","O"],["Move farther out","F"],["Cut angle","F"],["Position follows ball well","O"]]],
+ ["LEGS","legs",[["Good leg reaction","O"],["Explosive leg reaction","O"],["More leg explosion","F"],["Late leg reaction","O"],["No leg explosion","O"],["Maintain elevation","F"],["Avoid elevation","F"],["Strong lateral step","O"],["Step too short","O"],["Split distance into multiple steps","F"],["Maintain ready intensity","F"]]],
+ ["HANDS / ARMS","hands",[["Hands out","F"],["Hands in","F"],["Flexible elbows","F"],["Arms too extended","O"],["Automatic arm extension","F"],["Automatic upward reaction","O"],["Arm reaction too early","O"],["Arm reaction forward","F"],["Elbows move backward","O"],["Keep hand ahead of body line","F"],["React directly toward ball","F"],["One-hand block","O"],["Two-hand block","O"],["Smash ball down","O"],["Clean your window","F"]]],
+ ["BODY","body",[["Balanced","O"],["Balance lost","O"],["Horizontal position","O"],["Vertical position","O"],["Horizontal → Vertical","F"],["Turns onto back","O"],["Body moves backward","O"],["Bend body toward shot","F"],["Maintain body line","F"]]],
+ ["REACTION / TIMING","react",[["Good patience","O"],["Good timing","O"],["Early reaction","O"],["Late reaction","O"],["Good shot reaction","O"],["React after skip","F"],["Wait for ball direction","F"],["React to fake with legs","F"],["Track ball longer","F"]]],
+ ["BALL CONTROL","ball",[["Perfect ball control","O"],["Good ball control","O"],["Rebound controlled","O"],["Rebound to field","O"],["Rebound to defender","O"],["Flick ball out","O"],["Improve ball control","F"],["Quick rebound recovery","O"]]],
+ ["TRACKING / AWARENESS","track",[["Good tracking","O"],["Follow ball","F"],["Track pass","F"],["Track shooter","F"],["Identify primary threat","F"],["Stay focused on center","F"],["Anticipate return pass","F"],["Read situation earlier","F"]]],
+ ["COMMUNICATION","comm",[["Defensive communication","O"],["Organize zone","F"],["Call shot blocker","F"],["Increase defensive pressure","F"],["Direct teammate","F"],["Call return pass","F"],["Point direction","F"]]],
+];
+const ACT = {}; ACTIONS.forEach(([g,k,list])=>list.forEach(([l,t])=>ACT[l]={group:k,type:t}));
+const QUESTIONS=["What was your plan?","Why did you choose this pass?","What did you see in this situation?","Was this the pass you wanted to play?","What alternatives did you see?","What is your defender supposed to do here?","Why did your initial reaction go in this direction?","Would you want your defender to play this differently?"];
+const DEFAULT_CATS=["Shot Blocking & Ball Control","Leg Explosion & Elevation","Arm / Hand Mechanics","Skip-Shot Defense","Lateral Movement & Ready Position","Zone Defense","Press Defense","Counter Defense","Center & Close-Range Defense","5-on-6","Penalty Situations","Counter Offense & Distribution","Outlet Passing & Decision-Making","Communication & Defensive Organization","Tracking & Anticipation","Rebound Recovery","Other"];
+const DEFAULT_FAVS=[
+  {id:"f1",name:"Leg first",chips:["More leg explosion","Arm reaction too early","React directly toward ball"],questions:[]},
+  {id:"f2",name:"Hands out center",chips:["Hands out","Flexible elbows","Move farther out","Cut angle"],questions:[]},
+  {id:"f3",name:"Skip shot",chips:["More leg explosion","Good patience","React after skip"],questions:[]},
+  {id:"f4",name:"Outlet decision",chips:[],questions:["Why did you choose this pass?","What alternatives did you see?"]},
+];
+const DEFAULT_SETTINGS={pdf_logo:true,pdf_small_logo:true,pdf_max:4,pdf_summary:false,pdf_xquix:true,pdf_game_id:true,
+  remember_situation:true,show_recent:true,learn:true,auto_advance:true,haptic:true};
+
+/* ---------------- state + persistence ---------------- */
+let S = {checks:{}, prefs:{settings:{...DEFAULT_SETTINGS},favorites:DEFAULT_FAVS.slice(),recent:[],phrases:[],cats:[],situations:[],updated_at:"1970"}};
+let UI = {view:"home", checkId:null, gameId:null, tab:"scenes"};
+let W = null; // wizard
+try{ const raw=localStorage.getItem(STORE_KEY); if(raw){ const d=JSON.parse(raw); if(d&&d.checks) S.checks=d.checks; if(d&&d.prefs) S.prefs={...S.prefs,...d.prefs,settings:{...DEFAULT_SETTINGS,...(d.prefs.settings||{})}}; } }catch(e){}
+try{ const u=JSON.parse(localStorage.getItem(STORE_KEY+"_ui")||"null"); if(u&&u.checkId&&S.checks[u.checkId]&&!S.checks[u.checkId].deleted) UI={...UI,...u}; }catch(e){}
+const ST = () => S.prefs.settings;
+const cats = () => DEFAULT_CATS.concat(S.prefs.cats||[]);
+function saveLocal(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(S)); localStorage.setItem(STORE_KEY+"_ui", JSON.stringify({checkId:UI.checkId,gameId:UI.gameId,view:UI.view,tab:UI.tab})); }catch(e){} }
+
+// ---- cloud: XquiX Studio Supabase (Game Check account) ----
+const SB_URL="https://asmmplnwbzlnmsctbhmx.supabase.co";
+const SB_KEY="sb_publishable_ncm3IqQ2v7FvJCIQ5Z8d-A_-MR-n5_k";
+const SITE_URL=location.origin+location.pathname.replace(/index\.html$/,"");
+let sb=null; try{ sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}); }catch(e){ sb=null; }
+let USER=null, AUTH_READY=false;
+// CLOUD: "unknown" | "ok" | "setup" (tables not created yet) | "denied" (account lacks Game Check access) | "offline"
+let CLOUD="unknown", MARKS_STATE="unknown";
+let syncState="device"; const dirty=new Set(); let syncTimer=null, pulling=false;
+const DOC_CHECK=(k)=>k!=="prefs";
+function errKind(err){
+  if(!err) return null;
+  const c=String(err.code||""), m=String(err.message||"").toLowerCase();
+  if(c==="PGRST205"||c==="42P01"||m.includes("could not find the table")||m.includes("does not exist")) return "setup";
+  if(c==="42501"||c==="PGRST301"||m.includes("row-level security")||m.includes("permission denied")) return "denied";
+  if(m.includes("failed to fetch")||m.includes("network")||!navigator.onLine) return "offline";
+  return "error";
+}
+function markDirty(key){ dirty.add(key); clearTimeout(syncTimer); syncTimer=setTimeout(flush,900); }
+async function flush(){
+  if(!sb||!USER||!dirty.size) return;
+  const keys=[...dirty]; dirty.clear(); setSync("syncing");
+  const rows=keys.map(k=>{
+    if(k==="prefs") return {owner:USER.id,id:"prefs",kind:"prefs",data:S.prefs,deleted:false,updated_at:toTs(S.prefs.updated_at)};
+    const c=S.checks[k]; if(!c) return null;
+    return {owner:USER.id,id:k,kind:"check",data:c,deleted:!!c.deleted,updated_at:toTs(c.updated_at)};
+  }).filter(Boolean);
+  if(!rows.length){ setSync(CLOUD==="ok"?"synced":"device"); return; }
+  try{
+    const {error}=await sb.from("gc_documents").upsert(rows,{onConflict:"owner,id"});
+    if(error){ keys.forEach(k=>dirty.add(k)); CLOUD=errKind(error)||"error"; setSync("device"); return; }
+    CLOUD="ok"; setSync(dirty.size?"syncing":"synced");
+  }catch(e){ keys.forEach(k=>dirty.add(k)); CLOUD="offline"; setSync("device"); }
+}
+function toTs(v){ return v&&v!=="1970"?v:new Date(0).toISOString(); }
+function setSync(s){ syncState=s; document.querySelectorAll("#sync").forEach(el=>el.textContent=syncLabel()); }
+function syncLabel(){
+  if(syncState==="syncing") return "Saving…";
+  if(CLOUD==="ok") return "Saved · synced";
+  if(CLOUD==="setup") return "Saved on this device · cloud not set up yet";
+  if(CLOUD==="denied") return "Saved on this device · no Game Check access";
+  if(CLOUD==="offline"||!navigator.onLine) return "Saved on this device · offline";
+  return "Saved on this device";
+}
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden") flush(); });
+window.addEventListener("online",()=>{ pull(); loadMarks(); });
+async function pull(){
+  if(!sb||!USER||pulling) return; pulling=true;
+  try{
+    await flush();
+    const {data,error}=await sb.from("gc_documents").select("id,kind,data,deleted,updated_at");
+    if(error){ CLOUD=errKind(error)||"error"; setSync("device"); return; }
+    let changed=false; const remoteIds=new Set();
+    (data||[]).forEach(r=>{
+      const obj=r.data; if(!obj||typeof obj!=="object") return;
+      if(r.id==="prefs"){ remoteIds.add("prefs"); if((obj.updated_at||"")>(S.prefs.updated_at||"")){ S.prefs={...S.prefs,...obj,settings:{...DEFAULT_SETTINGS,...(obj.settings||{})}}; changed=true; } else if((obj.updated_at||"")<(S.prefs.updated_at||"")) markDirty("prefs"); return; }
+      remoteIds.add(r.id); const loc=S.checks[r.id];
+      if(!loc||(obj.updated_at||"")>(loc.updated_at||"")){ S.checks[r.id]=obj; changed=true; }
+      else if((obj.updated_at||"")<(loc.updated_at||"")) markDirty(r.id);
+    });
+    Object.keys(S.checks).forEach(cid=>{ if(!remoteIds.has(cid)) markDirty(cid); });
+    if(!remoteIds.has("prefs")){ if(S.prefs.updated_at==="1970") S.prefs.updated_at=now(); markDirty("prefs"); }
+    CLOUD="ok"; setSync(dirty.size?"syncing":"synced");
+    if(changed){ saveLocal(); if(P) P.refresh(); else if(!W&&!$("#layer .sheet")) render(); }
+  }catch(e){ CLOUD="offline"; setSync("device"); }
+  finally{ pulling=false; }
+}
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"){ pull(); loadMarks(); } });
+setInterval(()=>{ if(document.visibilityState==="visible"&&USER){ pull(); if(MARKS_STATE!=="live") loadMarks(); } },30000);
+
+// ---- Inbox: scenes marked in the XquiX Studio Game Tracker ----
+let MARKS=[], marksChannel=null;
+async function loadMarks(){
+  if(!sb||!USER) return;
+  try{
+    const {data,error}=await sb.from("gc_scene_marks").select("*").eq("status","new").order("created_at",{ascending:true}).limit(300);
+    if(error){ const k=errKind(error); MARKS_STATE=k==="setup"?"setup":k==="offline"?"offline":"error"; MARKS=[]; updateInbox(); return; }
+    if(MARKS_STATE!=="live") MARKS_STATE="ok";
+    // a mark already turned into a scene (e.g. status update lost while offline) is settled here
+    const used={}; Object.values(S.checks).forEach(c=>{ if(!c.deleted) (c.scenes||[]).forEach(s=>{ if(s.mark_id) used[s.mark_id]=c.id+"/"+s.id; }); });
+    const fresh=[]; (data||[]).forEach(m=>{ if(used[m.id]) setMarkStatus(m.id,"imported",used[m.id]); else fresh.push(m); });
+    MARKS=fresh; updateInbox();
+  }catch(e){ MARKS_STATE="offline"; updateInbox(); }
+}
+function subscribeMarks(){
+  if(!sb||!USER||marksChannel) return;
+  try{
+    marksChannel=sb.channel("gc-marks").on("postgres_changes",{event:"*",schema:"public",table:"gc_scene_marks"},()=>loadMarks())
+      .subscribe(st=>{ if(st==="SUBSCRIBED"){ MARKS_STATE="live"; } else if(st==="CHANNEL_ERROR"||st==="TIMED_OUT"||st==="CLOSED"){ if(MARKS_STATE==="live") MARKS_STATE="ok"; } });
+  }catch(e){}
+}
+async function setMarkStatus(id,status,ref){
+  if(!sb||!USER) return false;
+  const patch=status==="new"?{status:"new",imported_at:null,game_check_ref:null}:status==="imported"?{status,imported_at:now(),game_check_ref:ref||null}:{status};
+  try{ const {error}=await sb.from("gc_scene_marks").update(patch).eq("id",id); return !error; }catch(e){ return false; }
+}
+function updateInbox(){
+  const n=MARKS.length;
+  document.querySelectorAll(".inboxbtn .badge").forEach(b=>{ b.textContent=n>99?"99+":String(n); b.hidden=!n; });
+  if($("#layer .inbox")) drawInbox();
+}
+
+// ---- sign-in ----
+async function initAuth(){
+  if(!sb){ AUTH_READY=true; render(); return; }
+  sb.auth.onAuthStateChange((ev,session)=>{
+    if(ev==="PASSWORD_RECOVERY"){ USER=session&&session.user||USER; UI.view="setpw"; render(); return; }
+    const u=session&&session.user||null; const changedUser=(u&&u.id)!==(USER&&USER.id);
+    USER=u;
+    if(changedUser){ if(USER){ adoptLocalFor(USER.id); pull(); loadMarks(); subscribeMarks(); } if(AUTH_READY) render(); }
+  });
+  try{ const {data}=await sb.auth.getSession(); USER=data&&data.session&&data.session.user||null; }catch(e){}
+  AUTH_READY=true;
+  if(USER){ adoptLocalFor(USER.id); pull(); loadMarks(); subscribeMarks(); }
+  render();
+}
+// local data belongs to one account; a different account on this device starts empty
+function adoptLocalFor(uid){
+  let owner=null; try{ owner=localStorage.getItem(STORE_KEY+"_owner"); }catch(e){}
+  if(owner&&owner!==uid){ S.checks={}; S.prefs={settings:{...DEFAULT_SETTINGS},favorites:DEFAULT_FAVS.slice(),recent:[],phrases:[],cats:[],situations:[],updated_at:"1970"}; UI={view:"home",checkId:null,gameId:null,tab:"scenes"}; }
+  try{ localStorage.setItem(STORE_KEY+"_owner",uid); }catch(e){}
+  saveLocal();
+}
+
+function touchCheck(c){ c.updated_at=now(); saveLocal(); markDirty(c.id); setSync(USER?"syncing":"device"); }
+function touchPrefs(){ S.prefs.updated_at=now(); saveLocal(); markDirty("prefs"); }
+const CK = () => S.checks[UI.checkId];
+function buzz(){ if(ST().haptic&&navigator.vibrate) try{navigator.vibrate(8)}catch(e){} }
+
+/* ---------------- helpers ---------------- */
+function fmtTs(sec){ sec=Math.max(0,Math.round(sec||0)); const m=Math.floor(sec/60), s=sec%60; return m+":"+String(s).padStart(2,"0"); }
+function gameLabel(g,short){ if(!g) return "—"; const t=g.title||[g.team,g.opponent].filter(Boolean).join(" vs. ")||"Untitled game"; if(!short) return t; return t.replace(/ Men’s Water Polo| Men's Water Polo| Women’s Water Polo| Women's Water Polo/g,""); }
+function gameIndex(c,gid){ return c.games.findIndex(g=>g.id===gid); }
+function fmtDate(d){ if(!d) return ""; const dt=new Date(d+"T12:00:00"); if(isNaN(dt)) return d; return dt.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"}); }
+function statusPill(s){ return s==="final"?'<span class="pill final">Finalized</span>':s==="review"?'<span class="pill review">Ready for Review</span>':'<span class="pill prog">In Progress</span>'; }
+function emptyScene(gid){ return {id:uid(),game_id:gid,timestamp:null,situation_primary:"",situation_secondary:[],specific:[],specific_custom:"",offensive_position:"",defensive_position:[],distance:"",shot_type:"",shot_direction:"",shot_extra:"",outcome:"",outcome_detail:"",goalie_actions:[],action_types:{},feedback_tags:[],primary_category:"",category_manual:false,observation_text:"",focus_text:"",question_text:"",result_text:"",custom_notes:"",facts_text:"",facts_edited:false,xquix_simulation:false,xquix_note:"",created_at:now(),sort_order:0,include_in_pdf:true,page_break_before:false}; }
+function sitChain(s){ return [s.situation_primary,...(s.situation_secondary||[])].filter(Boolean); }
+function sceneHeadline(s){
+  const spec=(s.specific||[]).map(x=>x==="Custom"?(s.specific_custom||"Custom"):x);
+  const a = spec.length? spec.join(" / ") : sitChain(s).join(" → ");
+  const b = s.shot_type && s.shot_type!=="Other" ? (s.shot_type==="Skip"?"Skip Shot":s.shot_type) : "";
+  return [a,b].filter(Boolean).join(" / ") || "Scene";
+}
+function actionType(s,a){ return (s.action_types&&s.action_types[a]) || (ACT[a]?ACT[a].type:"F"); }
+
+/* facts = bullets built only from what was tapped */
+function autoFacts(s){
+  const out=[]; const chain=sitChain(s);
+  if(chain.length) out.push(chain.join(" → ")+((s.specific||[]).length?": "+s.specific.map(x=>x==="Custom"?(s.specific_custom||"Custom"):x).join(", "):"")+".");
+  let shot="";
+  if(s.offensive_position) shot = s.offensive_position==="Center"?"Shot from center":"Shot from position "+s.offensive_position;
+  if(s.distance && s.distance!=="Unknown") shot += (shot?", ":"Shot from ")+s.distance;
+  if(shot) out.push(shot+".");
+  const typ = s.shot_type ? (s.shot_type==="Skip"?"Skip shot":s.shot_type==="Catch & Shoot"?"Catch-and-shoot":s.shot_type==="Quick Finish"?"Quick finish":s.shot_type==="Other"?"":s.shot_type+(["Penalty","Rebound","Turn","Lob","Direct"].includes(s.shot_type)?" shot":"")) : "";
+  const dir = s.shot_direction ? s.shot_direction.toLowerCase() : "";
+  const ex = s.shot_extra ? s.shot_extra.toLowerCase() : "";
+  let line=[typ, dir?(typ?dir:"Ball "+dir):"", ex?(ex==="post"?"hits the post":ex==="over goal"?"over the goal":ex==="wide"?"wide":"blocked before the goal"):""].filter(Boolean).join(", ");
+  if(line){ line=line.charAt(0).toUpperCase()+line.slice(1); out.push(line+"."); }
+  if(s.outcome){ let o=s.outcome.charAt(0)+s.outcome.slice(1).toLowerCase(); o=o.replace("+ control","+ control").replace("+ rebound","+ rebound"); if(s.outcome_detail) o+=" ("+s.outcome_detail.toLowerCase()+")"; out.push("Outcome: "+o+"."); }
+  return out;
+}
+function facts(s){
+  const base = s.facts_edited ? s.facts_text.split("\n").map(x=>x.trim()).filter(Boolean) : autoFacts(s);
+  const extra = (s.custom_notes||"").split("\n").map(x=>x.trim()).filter(Boolean);
+  return base.concat(extra);
+}
+function sentenceList(arr){ return arr.map(a=>{ let t=a.trim(); if(!t) return ""; t=t.charAt(0).toUpperCase()+t.slice(1); return /[.!?]$/.test(t)?t:t+"."; }).filter(Boolean).join(" "); }
+function suggestText(s){
+  const O=[],F=[]; (s.goalie_actions||[]).forEach(a=>(actionType(s,a)==="O"?O:F).push(a));
+  return {observation:sentenceList(O), focus:sentenceList(F)};
+}
+
+/* learned suggestions: what the coach typically chose in similar situations (counts only, from saved scenes) */
+function learned(d,kind){
+  const chain=sitChain(d); const out={list:[],n:0};
+  if(!ST().learn||(!chain.length&&!d.shot_type)) return out;
+  const score={}, seen={};
+  Object.values(S.checks).forEach(c=>{ if(!c||c.deleted) return; (c.scenes||[]).forEach(s=>{
+    if(s.id===d.id) return; const sc=sitChain(s); let w=0;
+    if(d.situation_primary&&sc.includes(d.situation_primary)) w+=2;
+    chain.slice(1).forEach(x=>{ if(sc.includes(x)) w+=1; });
+    (d.specific||[]).forEach(x=>{ if((s.specific||[]).includes(x)) w+=1.5; });
+    if(d.shot_type&&s.shot_type===d.shot_type) w+=1.5;
+    if(d.offensive_position&&s.offensive_position===d.offensive_position) w+=0.5;
+    if(d.outcome&&s.outcome===d.outcome) w+=1;
+    if(w<2) return;
+    out.n++;
+    const items=kind==="actions"?(s.goalie_actions||[]):(s.question_text||"").split("\n").map(x=>x.trim()).filter(Boolean);
+    new Set(items).forEach(a=>{ score[a]=(score[a]||0)+w; seen[a]=(seen[a]||0)+1; });
+  }); });
+  out.list=Object.keys(score).filter(a=>seen[a]>=2).sort((a,b)=>score[b]-score[a]||seen[b]-seen[a]).slice(0,8).map(a=>({a,count:seen[a]}));
+  return out;
+}
+function contextLabel(d){ return [sitChain(d)[0],(d.specific||[])[0],d.shot_type&&(d.shot_type==="Skip"?"Skip shot":d.shot_type)].filter(Boolean).join(" · "); }
+
+/* deterministic category rules */
+function suggestCategory(s){
+  const chain=sitChain(s), has=x=>chain.includes(x), spec=s.specific||[];
+  const grp={}; (s.goalie_actions||[]).forEach(a=>{ const g=ACT[a]?ACT[a].group:"custom"; grp[g]=(grp[g]||0)+1; });
+  const technical=(grp.legs||0)+(grp.hands||0)+(grp.body||0)+(grp.react||0);
+  const dist=parseInt(s.distance)||99;
+  if(has("5 vs 6")) return "5-on-6";
+  if(has("Penalty")||s.shot_type==="Penalty") return "Penalty Situations";
+  if(s.shot_type==="Skip" && technical>0) return "Skip-Shot Defense";
+  if(has("Outlet Pass")) return "Outlet Passing & Decision-Making";
+  if(has("Counter Offense")) return spec.some(x=>/^Outlet/.test(x))?"Outlet Passing & Decision-Making":"Counter Offense & Distribution";
+  if(has("Center Situation")||(spec.includes("Center entry")&&dist<=4)||(s.offensive_position==="Center"&&dist<=4)) return "Center & Close-Range Defense";
+  if(has("Zone Defense")) return "Zone Defense";
+  if(has("Press Defense")) return "Press Defense";
+  if(has("Counter Defense")||has("Transition")) return "Counter Defense";
+  if((s.goalie_actions||[]).includes("Quick rebound recovery")) return "Rebound Recovery";
+  const order=[["legs","Leg Explosion & Elevation"],["hands","Arm / Hand Mechanics"],["ball","Shot Blocking & Ball Control"],["pos","Lateral Movement & Ready Position"],["track","Tracking & Anticipation"],["comm","Communication & Defensive Organization"],["react","Tracking & Anticipation"],["body","Lateral Movement & Ready Position"]];
+  let best=null,bn=0; order.forEach(([g,c])=>{ if((grp[g]||0)>bn){bn=grp[g];best=c;} });
+  if(best) return best;
+  if(/BLOCK/.test(s.outcome||"")) return "Shot Blocking & Ball Control";
+  return "Other";
+}
+function ensureCategory(s){ if(!s.category_manual||!s.primary_category) s.primary_category=suggestCategory(s); }
+
+/* ---------------- icons ---------------- */
+const IC={
+  back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+  list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>',
+  game:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3z"/></svg>',
+  doc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>',
+  gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  q:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></svg>',
+  dots:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>',
+  close:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  inbox:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.1z"/></svg>',
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>',
+};
+
+/* ---------------- render: top level ---------------- */
+function render(){
+  const app=$("#app");
+  app.onclick=app.oninput=app.onchange=null;
+  if(!AUTH_READY){ app.innerHTML=`<main class="gutter"><div class="empty"><div class="big">Loading…</div></div></main>`; return; }
+  if(UI.view==="setpw"&&USER){ app.innerHTML=setPwView(); bindSetPw(); return; }
+  if(!USER){ app.innerHTML=authView(); bindAuth(); return; }
+  if(UI.view==="settings"){ app.innerHTML=settingsView(); bindSettings(); return; }
+  if(UI.view==="new"){ app.innerHTML=newView(); bindNew(); return; }
+  if(UI.view==="home"||!CK()||CK().deleted){ UI.view="home"; app.innerHTML=homeView(); bindHome(); return; }
+  app.innerHTML=checkView(); bindCheck();
+}
+function topBar(title,sub,left,right){
+  return `<header class="top gutter"><div class="toprow">${left||""}<img src="${LOGO}" alt="The Perfect Goalie"><div class="t"><div class="eyebrow">${esc(sub)}</div><div class="athlete">${esc(title)}</div></div>${right||""}</div></header>`;
+}
+
+/* HOME */
+function homeView(){
+  const list=Object.values(S.checks).filter(c=>!c.deleted).sort((a,b)=>(b.updated_at||"").localeCompare(a.updated_at||""));
+  return topBar("My Game Video Check","The Perfect Goalie","",inboxBtn()+`<button class="iconbtn" data-act="settings" aria-label="Settings">${IC.gear}</button>`)+
+  `<main class="gutter stack" style="padding-bottom:40px">
+    <div class="sync" id="sync" style="color:var(--muted);text-align:right">${syncLabel()}</div>
+    <button class="btn primary block" data-act="new" style="min-height:64px;font-size:22px">+ New Game Video Check</button>
+    <div class="sect">Open existing · ${list.length}</div>
+    ${list.length?list.map(c=>`<div class="card"><button class="checkitem" data-open="${c.id}">
+      <div style="flex:1;min-width:0"><div style="font-family:var(--display);font-weight:800;font-size:22px;text-transform:uppercase">${esc(c.athlete_name)}${c.nickname?` <span class="muted" style="font-size:16px">“${esc(c.nickname)}”</span>`:""}</div>
+      <div class="meta">${c.games.length} game${c.games.length===1?"":"s"} · ${c.scenes.length} scene${c.scenes.length===1?"":"s"} · ${new Date(c.created_at).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}</div>
+      <div class="meta" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.games.map(g=>gameLabel(g,true)).join(" · "))}</div></div>${statusPill(c.status)}</button>
+      ${c.scenes.length?`<button class="btn ghost sm" data-present="${c.id}" style="margin-top:10px;width:100%">▶ Present (Mac / Zoom)</button>`:""}</div>`).join("")
+    :`<div class="empty"><div class="big">No game checks yet</div><p>Start with the athlete and the first game. Scenes save on every tap.</p></div>`}
+  </main>`;
+}
+function bindHome(){
+  $("#app").onclick=e=>{
+    const pr=e.target.closest("[data-present]"); if(pr){ openPresent(S.checks[pr.dataset.present]); return; }
+    const o=e.target.closest("[data-open]"); if(o){ UI.checkId=o.dataset.open; const c=CK(); UI.gameId=(c.games[0]||{}).id; UI.view="check"; UI.tab="scenes"; saveLocal(); render(); return; }
+    const a=e.target.closest("[data-act]"); if(!a) return;
+    if(a.dataset.act==="new"){ UI.view="new"; UI.checkId=null; render(); }
+    if(a.dataset.act==="settings"){ UI.prev="home"; UI.view="settings"; render(); }
+  };
+}
+
+/* NEW */
+function gameFields(g,p){
+  g=g||{};
+  return `<div class="stack">
+    <div><label class="f" for="${p}title">Game *</label><input id="${p}title" value="${esc(g.title)}" placeholder="Bucknell Men’s Water Polo vs. LIU"></div>
+    <div class="grid2"><div><label class="f" for="${p}team">Team</label><input id="${p}team" value="${esc(g.team)}" placeholder="Bucknell"></div><div><label class="f" for="${p}opponent">Opponent</label><input id="${p}opponent" value="${esc(g.opponent)}" placeholder="LIU"></div></div>
+    <div class="grid2"><div><label class="f" for="${p}date">Date</label><input id="${p}date" type="date" value="${esc(g.date)}"></div><div><label class="f" for="${p}level">Age group / level</label><input id="${p}level" value="${esc(g.level)}" placeholder="NCAA D1"></div></div>
+    <div><label class="f" for="${p}location">Location</label><input id="${p}location" value="${esc(g.location)}"></div>
+    <div class="grid2"><div><label class="f" for="${p}video_name">Video name</label><input id="${p}video_name" value="${esc(g.video_name)}" placeholder="YouTube"></div><div><label class="f" for="${p}video_url">Video URL</label><input id="${p}video_url" type="url" inputmode="url" value="${esc(g.video_url)}" placeholder="https://"></div></div>
+    <div><label class="f" for="${p}notes">Notes</label><textarea id="${p}notes" style="min-height:60px">${esc(g.notes)}</textarea></div>
+  </div>`;
+}
+function readGame(p,g){ g=g||{id:uid(),sort_order:0}; ["title","team","opponent","date","level","location","video_name","video_url","notes"].forEach(k=>{ const el=$("#"+p+k); if(el) g[k]=el.value.trim(); }); return g; }
+function newView(){
+  return topBar("New Game Video Check","Setup",`<button class="iconbtn" data-act="back" aria-label="Back">${IC.back}</button>`)+
+  `<main class="gutter stack" style="padding-bottom:40px">
+   <div class="sect">Athlete</div>
+   <div><label class="f" for="n_name">Athlete name *</label><input id="n_name" autocomplete="off" placeholder="Llewyn Thurston"></div>
+   <div class="grid2"><div><label class="f" for="n_nick">Nickname</label><input id="n_nick" autocomplete="off"></div><div><label class="f" for="n_pos">Position</label><input id="n_pos" value="Goalkeeper"></div></div>
+   <div class="sect">Game 1</div>
+   ${gameFields({},"g_")}
+   <p id="n_err" class="note" style="color:var(--danger)" hidden></p>
+   <button class="btn primary block" data-act="start" style="min-height:62px;font-size:22px">Start analysis</button>
+  </main>`;
+}
+function bindNew(){
+  $("#app").onclick=e=>{
+    const a=e.target.closest("[data-act]"); if(!a) return;
+    if(a.dataset.act==="back"){ UI.view="home"; render(); }
+    if(a.dataset.act==="start"){
+      const name=$("#n_name").value.trim(); const g=readGame("g_");
+      if(!name||!(g.title||g.team||g.opponent)){ const er=$("#n_err"); er.hidden=false; er.textContent="Add the athlete name and a game title (or team / opponent) to start."; return; }
+      if(!g.title) g.title=[g.team,g.opponent].filter(Boolean).join(" vs. ");
+      const c={id:uid(),athlete_id:uid(),athlete_name:name,nickname:$("#n_nick").value.trim(),position:$("#n_pos").value.trim()||"Goalkeeper",created_at:now(),updated_at:now(),status:"progress",games:[g],scenes:[],pdf_settings:{cat_order:[],cat_titles:{},filename:""}};
+      S.checks[c.id]=c; UI.checkId=c.id; UI.gameId=g.id; UI.view="check"; UI.tab="scenes"; touchCheck(c); render();
+    }
+  };
+}
+
+/* CHECK VIEW (analysis screen) */
+function checkView(){
+  const c=CK(); if(!c.games.find(g=>g.id===UI.gameId)) UI.gameId=(c.games[0]||{}).id;
+  const head=`<header class="top gutter"><div class="toprow"><button class="iconbtn" data-act="home" aria-label="All game checks">${IC.home}</button><img src="${LOGO}" alt=""><div class="t"><div class="eyebrow">Game Video Check</div><div class="athlete">${esc(c.athlete_name)}</div></div>${inboxBtn()}<button class="iconbtn" data-act="settings" aria-label="Settings">${IC.gear}</button></div>
+   <div class="gamesel"><select id="gamesel" aria-label="Current game">${c.games.map((g,i)=>`<option value="${g.id}" ${g.id===UI.gameId?"selected":""}>G${i+1} · ${esc(gameLabel(g,true))}</option>`).join("")}</select><span class="sync" id="sync">${syncLabel()}</span></div></header>`;
+  let body="";
+  if(UI.tab==="scenes") body=scenesTab(c);
+  else if(UI.tab==="game") body=gameTab(c);
+  else if(UI.tab==="preview") body=previewTab(c);
+  const t=(k,ic,l)=>`<button class="tab ${UI.tab===k?"on":""}" data-tab="${k}">${ic}<span>${l}</span></button>`;
+  return head+`<main class="gutter" id="main">${body}</main>
+  <nav class="bottom"><div class="bb">${t("scenes",IC.list,"Scenes")}${`<button class="tab" data-act="question">${IC.q}<span>Question</span></button>`}<button class="addscene" data-act="add">+ SCENE</button>${t("game",IC.game,"Game")}${t("preview",IC.doc,"Preview")}</div></nav>`;
+}
+function sortedScenes(c){
+  return c.scenes.slice().sort((a,b)=>gameIndex(c,a.game_id)-gameIndex(c,b.game_id)||(a.timestamp-b.timestamp)||((a.created_at||"").localeCompare(b.created_at||"")));
+}
+function scenesTab(c){
+  const last=c.scenes.slice().sort((a,b)=>(b.created_at||"").localeCompare(a.created_at||""))[0];
+  const quick = last?`<div class="quick" style="margin-bottom:6px"><button class="btn ghost sm" data-act="dupLast">Duplicate last</button><button class="btn ghost sm" data-act="sameSit">Same situation</button><button class="btn ghost sm" data-act="repeatFb">Repeat feedback</button></div>`:"";
+  if(!c.scenes.length) return `<div class="empty"><div class="big">No scenes yet</div><p>Pause the video, tap <b>+ SCENE</b>, enter the time and tap through the situation. Most scenes take 6–10 taps.</p></div>`;
+  let html=quick+`<p class="note" style="margin:6px 0 0">Tap a scene to edit. Swipe left to duplicate or delete. Press and hold for more.</p>`;
+  c.games.forEach((g,gi)=>{
+    const list=sortedScenes(c).filter(s=>s.game_id===g.id); if(!list.length) return;
+    html+=`<div class="gamehead"><h3>Game ${gi+1} · ${esc(gameLabel(g,true))}</h3><span class="muted" style="font-size:14px">${list.length}</span></div><div class="stack" style="gap:8px">`;
+    list.forEach(s=>{ html+=sceneRow(s); });
+    html+=`</div>`;
+  });
+  return html;
+}
+function sceneRow(s){
+  const out=s.outcome?`<span class="tg ${s.outcome==="GOAL"?"goal":"out"}">${esc(s.outcome)}</span>`:"";
+  const labs=[s.observation_text&&"Observation",s.focus_text&&"Focus",s.question_text&&"Question",s.result_text&&"Result"].filter(Boolean).map(l=>`<span class="tg o">${l}</span>`).join("");
+  const x=s.xquix_simulation?'<span class="tg x">XquiX</span>':"";
+  const off=s.include_in_pdf===false?'<span class="tg off">Not in PDF</span>':"";
+  const spec=(s.specific||[]).map(v=>v==="Custom"?(s.specific_custom||"Custom"):v).join(", ");
+  return `<div class="srow" data-sid="${s.id}"><div class="actions"><button class="dup" data-sact="dup">Duplicate</button><button class="del" data-sact="del">Delete</button></div>
+   <div class="sbody" role="button" tabindex="0" data-edit="${s.id}"><div><div class="ts">${fmtTs(s.timestamp)}</div>${(()=>{ const c=CK(); const u=videoAt((c.games[gameIndex(c,s.game_id)]||{}).video_url,s.timestamp); return u?`<a class="vmini" href="${esc(u)}" target="_blank" rel="noopener" aria-label="Open video at ${fmtTs(s.timestamp)}">▶ Video</a>`:""; })()}</div>
+   <div style="min-width:0"><div class="sline">${esc(sitChain(s).join(" → ")||"No situation")}</div>${spec||s.offensive_position?`<div class="ssub">${esc([spec,s.offensive_position?(s.offensive_position==="Center"?"Shot from center":"Shot position "+s.offensive_position):"",s.shot_type].filter(Boolean).join(" · "))}</div>`:""}
+   <div class="ssub" style="font-size:12.5px">${esc(s.primary_category)}</div><div class="tags">${out}${labs}${x}${off}</div></div>
+   <button class="more" data-menu="${s.id}" aria-label="More actions">${IC.dots}</button></div></div>`;
+}
+function gameTab(c){
+  return `<div class="stack">
+   <div class="sect" style="margin-top:4px">Status</div>
+   <div class="seg" style="width:100%;display:grid;grid-template-columns:repeat(3,1fr)">${[["progress","In Progress"],["review","Ready for Review"],["final","Finalized"]].map(([k,l])=>`<button data-status="${k}" class="${c.status===k?"on":""}" style="padding:12px 4px">${l}</button>`).join("")}</div>
+   <div class="sect">Athlete</div>
+   <div><label class="f" for="a_name">Athlete name</label><input id="a_name" value="${esc(c.athlete_name)}"></div>
+   <div class="grid2"><div><label class="f" for="a_nick">Nickname</label><input id="a_nick" value="${esc(c.nickname)}"></div><div><label class="f" for="a_pos">Position</label><input id="a_pos" value="${esc(c.position||"Goalkeeper")}"></div></div>
+   ${c.games.map((g,i)=>`<div class="card stack" data-gid="${g.id}"><div class="row" style="justify-content:space-between"><h3 style="font-size:20px;text-transform:uppercase">Game ${i+1}</h3><div class="row" style="gap:6px">
+     ${g.video_url?`<a class="btn ghost sm" href="${esc(g.video_url)}" target="_blank" rel="noopener">Open video</a>`:""}
+     ${i>0?`<button class="btn ghost sm" data-gmove="${g.id}" aria-label="Move game up">↑</button>`:""}
+     ${c.games.length>1?`<button class="btn ghost sm" data-gdel="${g.id}">Remove</button>`:""}</div></div>
+     ${gameFields(g,"e"+i+"_")}</div>`).join("")}
+   <button class="btn navy block" data-act="addGame">+ Add game</button>
+   <p class="note">Changes save as you type. A game with scenes can only be removed after its scenes are moved or deleted.</p>
+   <button class="btn ghost block" data-act="delCheck" style="color:var(--danger);margin-top:12px">Delete this Game Video Check</button>
+  </div>`;
+}
+
+/* ---------------- check view bindings ---------------- */
+let toastTimer=null, undoState=null;
+function toast(msg,undoFn){
+  const L=$("#layer"); L.querySelector(".toast")?.remove();
+  const t=document.createElement("div"); t.className="toast"; t.innerHTML=`<span>${esc(msg)}</span>${undoFn?'<button>Undo</button>':""}`;
+  if(undoFn) t.querySelector("button").onclick=()=>{ undoFn(); t.remove(); };
+  L.appendChild(t); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.remove(), undoFn?8000:2500);
+}
+function modal(html,onClick){
+  const L=$("#layer"); const m=document.createElement("div"); m.className="modal"; m.innerHTML=`<div class="box" role="dialog" aria-modal="true">${html}</div>`;
+  m.addEventListener("click",e=>{ if(e.target===m){ m.remove(); return; } onClick&&onClick(e,m); });
+  L.appendChild(m); return m;
+}
+function confirmBox(title,text,okLabel,fn){
+  modal(`<h3>${esc(title)}</h3><p class="note" style="margin:0 0 16px">${esc(text)}</p><div class="grid2"><button class="btn ghost" data-c="no">Cancel</button><button class="btn danger" data-c="yes">${esc(okLabel)}</button></div>`,(e,m)=>{
+    const b=e.target.closest("[data-c]"); if(!b) return; m.remove(); if(b.dataset.c==="yes") fn(); });
+}
+function deleteScene(c,sid){
+  confirmBox("Delete scene?","This removes the scene from this Game Video Check.","Delete",()=>{
+    const i=c.scenes.findIndex(s=>s.id===sid); if(i<0) return; const [s]=c.scenes.splice(i,1); touchCheck(c); render();
+    toast("Scene "+fmtTs(s.timestamp)+" deleted",()=>{ c.scenes.splice(i,0,s); touchCheck(c); render(); });
+  });
+}
+function duplicateScene(c,sid){
+  const s=c.scenes.find(x=>x.id===sid); if(!s) return; const d=JSON.parse(JSON.stringify(s)); d.id=uid(); d.created_at=now(); c.scenes.push(d); touchCheck(c); render(); toast("Duplicated "+fmtTs(s.timestamp));
+}
+function sceneMenu(c,sid){
+  const s=c.scenes.find(x=>x.id===sid); if(!s) return;
+  const others=Object.values(S.checks).filter(x=>!x.deleted&&x.id!==c.id);
+  const m=modal(`<h3>Scene ${fmtTs(s.timestamp)}</h3><div class="menu">
+    <button data-m="edit">Edit scene</button>
+    <button data-m="cat">Move to another category</button>
+    ${c.games.length>1?'<button data-m="game">Move to another game</button>':""}
+    <button data-m="dup">Duplicate</button>
+    <button data-m="pdf">${s.include_in_pdf===false?"Include in PDF":"Remove from PDF"}</button>
+    ${others.length?'<button data-m="copy">Copy to another Game Check</button>':""}
+    <button data-m="del" style="color:var(--danger)">Delete</button></div>`,(e,mm)=>{
+    const b=e.target.closest("[data-m]"); if(!b) return; const k=b.dataset.m; mm.remove();
+    if(k==="edit") openWizard(c,s.id);
+    if(k==="dup") duplicateScene(c,sid);
+    if(k==="del") deleteScene(c,sid);
+    if(k==="pdf"){ s.include_in_pdf=s.include_in_pdf===false; touchCheck(c); render(); }
+    if(k==="cat") pickCategory(s.primary_category,cat=>{ s.primary_category=cat; s.category_manual=true; touchCheck(c); render(); toast("Moved to "+cat); });
+    if(k==="game") modal(`<h3>Move to game</h3><div class="menu">${c.games.map((g,i)=>`<button data-g="${g.id}">G${i+1} · ${esc(gameLabel(g,true))}${g.id===s.game_id?" ✓":""}</button>`).join("")}</div>`,(e2,m2)=>{ const gb=e2.target.closest("[data-g]"); if(!gb) return; s.game_id=gb.dataset.g; m2.remove(); touchCheck(c); render(); });
+    if(k==="copy") modal(`<h3>Copy to Game Check</h3><div class="menu">${others.map(o=>`<button data-o="${o.id}">${esc(o.athlete_name)} · ${esc(o.games.map(g=>gameLabel(g,true)).join(", "))}</button>`).join("")}</div>`,(e2,m2)=>{
+      const ob=e2.target.closest("[data-o]"); if(!ob) return; const o=S.checks[ob.dataset.o]; const d=JSON.parse(JSON.stringify(s)); d.id=uid(); d.created_at=now(); d.game_id=(o.games[0]||{}).id; o.scenes.push(d); m2.remove(); touchCheck(o); toast("Copied to "+o.athlete_name+" (Game 1)"); });
+  });
+}
+function pickCategory(cur,fn){
+  modal(`<h3>Category</h3><div class="menu">${cats().map(k=>`<button data-k="${esc(k)}">${esc(k)}${k===cur?" ✓":""}</button>`).join("")}</div>`,(e,m)=>{ const b=e.target.closest("[data-k]"); if(!b) return; m.remove(); fn(b.dataset.k); });
+}
+function bindCheck(){
+  const c=CK(), app=$("#app");
+  $("#gamesel").onchange=e=>{ UI.gameId=e.target.value; saveLocal(); if(UI.tab==="preview") render(); };
+  app.onclick=e=>{
+    const tb=e.target.closest("[data-tab]"); if(tb){ UI.tab=tb.dataset.tab; saveLocal(); render(); window.scrollTo(0,0); return; }
+    const sa=e.target.closest("[data-sact]"); if(sa){ const sid=sa.closest("[data-sid]").dataset.sid; sa.dataset.sact==="dup"?duplicateScene(c,sid):deleteScene(c,sid); return; }
+    const mn=e.target.closest("[data-menu]"); if(mn){ e.stopPropagation(); sceneMenu(c,mn.dataset.menu); return; }
+    if(e.target.closest("a[href]")) return;
+    const ed=e.target.closest("[data-edit]"); if(ed){ const body=ed; if(body.dataset.swiped==="1"){ body.style.transform=""; body.dataset.swiped=""; return; } openWizard(c,ed.dataset.edit); return; }
+    const st=e.target.closest("[data-status]"); if(st){ c.status=st.dataset.status; touchCheck(c); render(); return; }
+    const gm=e.target.closest("[data-gmove]"); if(gm){ const i=gameIndex(c,gm.dataset.gmove); const [g]=c.games.splice(i,1); c.games.splice(i-1,0,g); touchCheck(c); render(); return; }
+    const gd=e.target.closest("[data-gdel]"); if(gd){ const gid=gd.dataset.gdel; if(c.scenes.some(s=>s.game_id===gid)){ toast("Move or delete this game’s scenes first"); return; } confirmBox("Remove game?","The game has no scenes.","Remove",()=>{ c.games=c.games.filter(g=>g.id!==gid); touchCheck(c); render(); }); return; }
+    const pv=e.target.closest("[data-pv]"); if(pv){ previewAction(c,pv); return; }
+    const a=e.target.closest("[data-act]"); if(!a) return;
+    const k=a.dataset.act;
+    if(k==="home"){ flush(); UI.view="home"; saveLocal(); render(); }
+    if(k==="settings"){ UI.prev="check"; UI.view="settings"; render(); }
+    if(k==="add") openWizard(c,null);
+    if(k==="question") openWizard(c,null,{question:true});
+    if(k==="dupLast"){ const l=c.scenes.slice().sort((a,b)=>(b.created_at||"").localeCompare(a.created_at||""))[0]; const d=JSON.parse(JSON.stringify(l)); d.id=uid(); d.created_at=now(); d.timestamp=null; openWizard(c,null,{draft:d}); }
+    if(k==="sameSit"){ const l=lastScene(c); const d=emptyScene(UI.gameId); ["situation_primary","situation_secondary","specific","specific_custom","offensive_position","distance","shot_type"].forEach(f=>d[f]=JSON.parse(JSON.stringify(l[f]))); if(l.category_manual){d.primary_category=l.primary_category;d.category_manual=true;} openWizard(c,null,{draft:d}); }
+    if(k==="repeatFb"){ const l=lastScene(c); const d=emptyScene(UI.gameId); d.goalie_actions=l.goalie_actions.slice(); d.action_types={...l.action_types}; d.focus_text=l.focus_text; d.observation_text=l.observation_text; openWizard(c,null,{draft:d}); }
+    if(k==="addGame"){ const g={id:uid(),title:"",sort_order:c.games.length}; c.games.push(g); touchCheck(c); render(); setTimeout(()=>{ const el=$("#e"+(c.games.length-1)+"_title"); el&&el.focus(); },50); }
+    if(k==="delCheck") confirmBox("Delete Game Video Check?",`${c.athlete_name} · ${c.scenes.length} scenes. This cannot be undone.`,"Delete",()=>{ c.deleted=true; c.scenes=[]; touchCheck(c); UI.view="home"; render(); });
+    if(k==="genpdf") exportPdf(c);
+    if(k==="present") openPresent(c);
+    if(k==="refreshPreview") buildPreview(c);
+  };
+  // inputs in game tab autosave
+  app.oninput=e=>{
+    const id=e.target.id||"";
+    if(id==="a_name"){ c.athlete_name=e.target.value; touchCheck(c); }
+    else if(id==="a_nick"){ c.nickname=e.target.value; touchCheck(c); }
+    else if(id==="a_pos"){ c.position=e.target.value; touchCheck(c); }
+    else { const m=id.match(/^e(\d+)_(\w+)$/); if(m){ const g=c.games[+m[1]]; if(g){ g[m[2]]=e.target.value; touchCheck(c); } } }
+    if(e.target.dataset.cattitle!==undefined){ c.pdf_settings.cat_titles[e.target.dataset.cattitle]=e.target.value; touchCheck(c); schedulePreview(c); }
+    if(id==="pf_name"){ c.pdf_settings.filename=e.target.value; touchCheck(c); }
+  };
+  app.onchange=e=>{ if(e.target.id&&/^e\d+_title$/.test(e.target.id)) { const gs=$("#gamesel"); if(gs) render(); } };
+  if(!window.__swipeBound){ window.__swipeBound=true; bindSwipe(app); }
+  if(UI.tab==="preview") setTimeout(()=>buildPreview(c),30);
+}
+function lastScene(c){ return c.scenes.slice().sort((a,b)=>(b.created_at||"").localeCompare(a.created_at||""))[0]; }
+function bindSwipe(app){
+  let sx=0,sy=0,el=null,dx=0,lp=null,moved=false;
+  app.addEventListener("touchstart",e=>{
+    const b=e.target.closest(".sbody"); if(!b) return; el=b; sx=e.touches[0].clientX; sy=e.touches[0].clientY; dx=0; moved=false;
+    lp=setTimeout(()=>{ if(!moved&&el&&CK()){ buzz(); const sid=el.dataset.edit; el.dataset.justswiped="1"; const k=el; setTimeout(()=>delete k.dataset.justswiped,600); el=null; sceneMenu(CK(),sid); } },550);
+  },{passive:true});
+  app.addEventListener("touchmove",e=>{
+    if(!el) return; const x=e.touches[0].clientX-sx, y=e.touches[0].clientY-sy;
+    if(Math.abs(x)>8||Math.abs(y)>8){ moved=true; clearTimeout(lp); }
+    if(Math.abs(y)>Math.abs(x)) return;
+    dx=Math.min(0,Math.max(-176,x+(el.dataset.swiped==="1"?-176:0))); el.style.transition="none"; el.style.transform=`translateX(${dx}px)`;
+  },{passive:true});
+  app.addEventListener("touchend",()=>{
+    clearTimeout(lp); if(!el) return; el.style.transition="";
+    if(moved){ if(dx<-70){ el.style.transform="translateX(-176px)"; el.dataset.swiped="1"; } else { el.style.transform=""; el.dataset.swiped=""; }
+      const keep=el; keep.dataset.justswiped="1"; setTimeout(()=>delete keep.dataset.justswiped,350); }
+    el=null;
+  });
+  app.addEventListener("click",e=>{ const b=e.target.closest(".sbody"); if(b&&b.dataset.justswiped){ e.stopImmediatePropagation(); e.preventDefault(); } },true);
+}
+
+/* ---------------- WIZARD ---------------- */
+function openWizard(c,sid,opt={}){
+  let draft;
+  if(sid){ draft=JSON.parse(JSON.stringify(c.scenes.find(s=>s.id===sid))); }
+  else if(opt.draft){ draft=opt.draft; draft.game_id=draft.game_id||UI.gameId; }
+  else {
+    draft=emptyScene(UI.gameId); const l=lastScene(c);
+    const lg=c.scenes.filter(s=>s.game_id===UI.gameId).sort((a,b)=>b.timestamp-a.timestamp)[0];
+  }
+  W={c,draft,isNew:!sid,step:0,fresh:true,question:!!opt.question,openGroups:{}};
+  if(opt.question){ W.steps=null; }
+  computeSteps(); if(opt.question) W.qmode=true;
+  renderWizard();
+}
+function computeSteps(){
+  const d=W.draft, chain=sitChain(d);
+  const st=["time","situation"];
+  if(chain.some(x=>SPECIFIC[x])) st.push("specific");
+  const onlyOffense = chain.length && chain.every(x=>["Counter Offense","Outlet Pass"].includes(x));
+  if(!onlyOffense) st.push("shot");
+  st.push("outcome","actions","feedback");
+  W.steps=st;
+}
+const STEP_LABEL={time:"Time",situation:"Situation",specific:"Detail",shot:"Shot",outcome:"Outcome",actions:"Goalie",feedback:"Feedback"};
+function renderWizard(){
+  const prevBody=$("#wbody"); const keep=(prevBody&&W.renderedStep===W.step)?prevBody.scrollTop:0;
+  const L=$("#layer"); let sh=L.querySelector(".sheet:not(.inbox)");
+  if(!sh){ sh=document.createElement("div"); sh.className="sheet"; L.appendChild(sh); document.body.style.overflow="hidden"; }
+  const d=W.draft, step=W.steps[W.step], c=W.c, gi=gameIndex(c,d.game_id);
+  const sum=[d.timestamp!=null?`<b>${fmtTs(d.timestamp)}</b>`:`<b>No time yet</b>`, c.games.length>1?`G${gi+1}`:"", esc(sitChain(d).join(" → ")), esc((d.specific||[]).join(", ")), d.offensive_position?"Pos "+esc(d.offensive_position):"", esc(d.shot_type), esc(d.shot_direction), d.outcome?`<b>${esc(d.outcome)}</b>`:"", d.goalie_actions.length?d.goalie_actions.length+" goalie":""].filter(Boolean).join(" · ");
+  const isLast=W.step===W.steps.length-1;
+  sh.innerHTML=`<div class="shead gutter"><div class="row"><button class="iconbtn" data-w="close" aria-label="Close without saving">${IC.close}</button>
+    <div style="flex:1;min-width:0"><div class="eyebrow">${W.isNew?"New scene":"Edit scene"} · ${esc(c.athlete_name)}</div><div class="athlete" style="font-size:20px">${esc(STEP_LABEL[step])}</div></div>
+    <button class="btn primary sm" data-w="save">Save</button></div>
+    <div class="steps">${W.steps.map((s,i)=>`<button data-go="${i}" class="${i===W.step?"on":i<W.step?"done":""}">${STEP_LABEL[s]}</button>`).join("")}</div>
+    <div class="summary">${sum}</div></div>
+   <div class="sbody2 gutter" id="wbody"><div>${stepHtml(step)}</div></div>
+   <div class="sfoot gutter"><button class="btn ghost" data-w="back" ${W.step===0?"disabled style='opacity:.4'":""}>Back</button>
+     ${isLast?`<button class="btn navy" data-w="saveNew">Save + new</button><button class="btn primary" data-w="save">Save</button>`:`<button class="btn navy" data-w="save">Save</button><button class="btn primary" data-w="next">Next</button>`}</div>`;
+  sh.onclick=wizClick; sh.oninput=wizInput;
+  W.renderedStep=W.step; if(keep) $("#wbody").scrollTop=keep;
+  if(step==="time") document.onkeydown=e=>{ if(!W) return; if(/^\d$/.test(e.key)) typeDigit(+e.key); else if(e.key==="Backspace") typeDel(); else if(e.key==="Enter") wizNext(); };
+  else document.onkeydown=null;
+}
+function closeWizard(){ const sh=$("#layer .sheet:not(.inbox)"); sh&&sh.remove(); document.body.style.overflow=""; document.onkeydown=null; W=null; }
+function tiles(list,sel,attr,cls=""){ return list.map(v=>`<button class="tl ${cls} ${(Array.isArray(sel)?sel.includes(v):sel===v)?"on":""}${v==="GOAL"?" goal":""}" data-${attr}="${esc(v)}">${esc(v)}</button>`).join(""); }
+function stepHtml(step){
+  const d=W.draft, c=W.c;
+  if(step==="time"){
+    const has=d.timestamp!=null, m=has?Math.floor(d.timestamp/60):0, s=has?d.timestamp%60:0;
+    return markBanner(d)+`<div class="tsbig" aria-live="polite">${has?`${m}<span class="c">:</span>${String(s).padStart(2,"0")}`:`<span class="muted">–<span class="c">:</span>––</span>`}</div>
+     <div class="adj"><button class="btn ghost sm" data-adj="-60">−1 min</button><button class="btn ghost sm" data-adj="-10">−10 s</button><button class="btn ghost sm" data-adj="10">+10 s</button><button class="btn ghost sm" data-adj="60">+1 min</button></div>
+     <div class="keypad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-key="${n}">${n}</button>`).join("")}<button class="fn" data-key="clr">Clear</button><button data-key="0">0</button><button class="fn" data-key="del">⌫</button></div>
+     ${c.games.length>1?`<div class="sect" style="text-align:center">Game</div><div class="tiles">${c.games.map((g,i)=>`<button class="tl ${g.id===d.game_id?"on":""}" data-wgame="${g.id}">G${i+1} · ${esc(gameLabel(g,true))}</button>`).join("")}</div>`:""}
+     <p class="note" style="text-align:center;margin-top:12px">Type minutes and seconds, e.g. 1 3 4 0 = 13:40.</p>`;
+  }
+  if(step==="situation"){
+    const all=SITUATIONS.slice(0,-1).concat(S.prefs.situations||[],["Other"]); const sel=sitChain(d);
+    return `<p class="note" style="margin-top:0">Tap one or more, in the order they happened (e.g. Counter Defense → Press Defense).</p>
+     <div class="tiles">${all.map(v=>{ const i=sel.indexOf(v); return `<button class="tl big ${i>=0?"on":""}" data-sit="${esc(v)}">${esc(v)}${i>=0&&sel.length>1?`<span class="ord">${i+1}</span>`:""}</button>`; }).join("")}</div>
+     ${sel.includes("Other")?`<div style="margin-top:12px"><label class="f" for="w_sitother">Describe situation</label><input id="w_sitother" value="${esc(d.specific_custom)}"></div>`:""}`;
+  }
+  if(step==="specific"){
+    let h=""; sitChain(d).forEach(sit=>{ if(!SPECIFIC[sit]) return; h+=`<div class="sect">${esc(sit)}</div><div class="tiles three">${tiles(SPECIFIC[sit].concat(["Custom"]),d.specific,"spec")}</div>`; });
+    if(d.specific.includes("Custom")) h+=`<div style="margin-top:12px"><label class="f" for="w_speccustom">Custom detail</label><input id="w_speccustom" value="${esc(d.specific_custom)}" placeholder="e.g. Zone 2–4"></div>`;
+    return h;
+  }
+  if(step==="shot"){
+    const cell=(v,h)=>{ const lab=(h==="Center"&&v==="Middle")?"Center":(h==="Center"?"Middle "+v:h+" "+v); return `<button data-dir="${esc(lab)}" class="${d.shot_direction===lab?"on":""}">${esc(lab)}</button>`; };
+    return `<div class="sect" style="margin-top:0">Shooter position</div><div class="tiles four">${tiles(POSITIONS,d.offensive_position,"opos")}</div>
+     <div class="sect">Distance</div><div class="tiles four">${tiles(DISTANCES,d.distance,"dist")}</div>
+     <div class="sect">Shot type</div><div class="tiles three">${tiles(SHOT_TYPES,d.shot_type,"stype")}</div>
+     <div class="sect">Shot direction</div>
+     <div class="goalgrid">${GRID_V.map(v=>GRID_H.map(h=>cell(v,h)).join("")).join("")}</div><div class="water"></div>
+     <div class="gridcap">Goal as seen on the video</div>
+     <div class="chips" style="margin-top:10px;justify-content:center">${SHOT_EXTRA.map(v=>`<button class="chip ${d.shot_extra===v?"on":""}" data-sex="${esc(v)}">${esc(v)}</button>`).join("")}</div>`;
+  }
+  if(step==="outcome"){
+    return `<div class="tiles">${tiles(OUTCOMES,d.outcome,"out","big")}</div>
+     ${d.outcome==="BLOCK + CONTROL"?`<div class="sect">Control</div><div class="chips">${CONTROL_DETAIL.map(v=>`<button class="chip ${d.outcome_detail===v?"on":""}" data-odet="${esc(v)}">${esc(v)}</button>`).join("")}</div>`:""}`;
+  }
+  if(step==="actions"){
+    const sel=d.goalie_actions; let h="";
+    const favs=S.prefs.favorites||[];
+    if(favs.length) h+=`<div class="sect" style="margin-top:0">Favorites</div><div class="chips">${favs.map(f=>`<button class="chip fav" data-fav="${f.id}">★ ${esc(f.name)}</button>`).join("")}</div>`;
+    const rec=(S.prefs.recent||[]).filter(r=>ACT[r]||(S.prefs.phrases||[]).includes(r)).slice(0,8);
+    const L=learned(d,"actions");
+    if(L.list.length) h+=`<div class="sect">Typical for ${esc(contextLabel(d))}</div><p class="note" style="margin:-4px 0 8px">From ${L.n} similar scene${L.n===1?"":"s"} you entered. Tap to use.</p><div class="chips">${L.list.map(({a,count})=>`<button class="chip ${sel.includes(a)?"on":""}" data-act2="${esc(a)}">${esc(a)} <span style="opacity:.6;font-size:12px">×${count}</span></button>`).join("")}</div>`;
+    if(ST().show_recent&&rec.length) h+=`<div class="sect">Recent</div><div class="chips">${rec.map(v=>`<button class="chip ${sel.includes(v)?"on":""}" data-act2="${esc(v)}">${esc(v)}</button>`).join("")}</div>`;
+    h+=`<div class="sect">Goalie action</div>`;
+    const groups=ACTIONS.concat([["MY PHRASES","mine",(S.prefs.phrases||[]).map(p=>[p,"F"])]]);
+    groups.forEach(([g,k,list])=>{
+      const n=list.filter(([l])=>sel.includes(l)).length; const open=W.openGroups[k]??(n>0);
+      h+=`<div class="grp"><button data-grp="${k}"><span>${esc(g)}</span>${n?`<span class="n">${n}</span>`:`<span class="muted" style="font-family:var(--body);font-size:14px">${open?"−":"+"}</span>`}</button>${open?`<div class="in"><div class="chips">${list.map(([l])=>`<button class="chip ${sel.includes(l)?"on":""}" data-act2="${esc(l)}">${esc(l)}</button>`).join("")}${k==="mine"?`<button class="chip fav" data-w="addPhrase">+ Add phrase</button>`:""}</div></div>`:""}</div>`;
+    });
+    h+=`<div class="row" style="margin-top:10px"><button class="btn ghost sm" data-w="saveFav" ${sel.length?"":"disabled style='opacity:.45'"}>★ Save selection as favorite</button></div>`;
+    return h;
+  }
+  if(step==="feedback"){
+    ensureCategory(d);
+    const sug=suggestText(d);
+    const types=d.goalie_actions.length?`<div class="sect" style="margin-top:0">Selected goalie feedback</div>${d.goalie_actions.map(a=>`<div class="otype"><span style="font-weight:600;min-width:0">${esc(a)}</span><div class="seg"><button data-otype="${esc(a)}|O" class="${actionType(d,a)==="O"?"on":""}">OBS</button><button data-otype="${esc(a)}|F" class="${actionType(d,a)==="F"?"on":""}">FOCUS</button></div></div>`).join("")}`:"";
+    const fb=(key,label,s)=>`<div class="fbl">${label}</div>${s&&s!==d[key]?`<div class="sugg"><div class="h"><span>Suggested from your taps</span><button class="btn primary sm" style="min-height:32px;font-size:14px" data-use="${key}">Use</button></div>${esc(s)}</div>`:""}<textarea id="w_${key}" placeholder="Optional · tap the mic on the keyboard to dictate">${esc(d[key])}</textarea>`;
+    const fx=autoFacts(d);
+    return `${markBanner(d)}${types}
+     ${(sug.observation&&sug.observation!==d.observation_text)||(sug.focus&&sug.focus!==d.focus_text)?`<button class="btn primary block" data-w="useAll" style="margin-top:12px">Use all suggestions</button>`:""}
+     <p class="note" style="margin:10px 0 0">Empty Observation and Focus fields are filled with your selected goalie feedback when you save.</p>
+     ${fb("observation_text","Observation",sug.observation)}
+     ${fb("focus_text","Focus",sug.focus)}
+     <div class="fbl">Question</div>${(()=>{ const LQ=learned(d,"questions"); return LQ.list.length?`<div class="note" style="margin-bottom:6px">Typical for ${esc(contextLabel(d))}</div><div class="chips" style="margin-bottom:10px">${LQ.list.map(({a,count})=>`<button class="chip fav" data-q="${esc(a)}">${esc(a)} <span style="opacity:.6;font-size:12px">×${count}</span></button>`).join("")}</div>`:""; })()}<div class="chips" style="margin-bottom:8px">${QUESTIONS.filter(q=>!learned(d,"questions").list.some(x=>x.a===q)).map(q=>`<button class="chip" data-q="${esc(q)}">${esc(q)}</button>`).join("")}</div>
+     <textarea id="w_question_text" placeholder="One question per line. Questions stay questions in the PDF.">${esc(d.question_text)}</textarea>
+     ${fb("result_text","Result","")}
+     <div class="sect">Scene facts in the PDF</div>
+     ${d.facts_edited?`<textarea id="w_facts_text" style="min-height:100px">${esc(d.facts_text)}</textarea><button class="btn ghost sm" data-w="factsAuto" style="margin-top:6px">Back to automatic facts</button>`
+       :`<div class="sugg" style="background:var(--surface)">${fx.length?fx.map(f=>"• "+esc(f)).join("<br>"):'<span class="muted">No facts tapped yet.</span>'}</div><button class="btn ghost sm" data-w="factsEdit">Edit facts</button>`}
+     <div style="margin-top:10px"><label class="f" for="w_custom_notes">Extra fact lines</label><textarea id="w_custom_notes" style="min-height:60px" placeholder="e.g. Pass from position 2 to position 4.">${esc(d.custom_notes)}</textarea></div>
+     <div class="sect">PDF category</div>
+     <button class="btn ghost block" data-w="cat" style="justify-content:space-between;text-transform:none;font-family:var(--body);font-size:16px;letter-spacing:0"><span>${esc(d.primary_category)}</span><span class="muted" style="font-size:13px">${d.category_manual?"Set by you":"Suggested"} · change</span></button>
+     ${d.category_manual?`<button class="btn ghost sm" data-w="catAuto" style="margin-top:6px">Use suggested category</button>`:""}
+     <div class="switch"><span><b>XquiX Studio Simulation</b><br><span class="note">Adds an XquiX label to this scene in the PDF</span></span><input type="checkbox" id="w_xq" ${d.xquix_simulation?"checked":""}></div>
+     ${d.xquix_simulation?`<textarea id="w_xquix_note" placeholder="Simulation note">${esc(d.xquix_note)}</textarea>`:""}
+     <div class="switch"><span><b>Include in PDF</b></span><input type="checkbox" id="w_inc" ${d.include_in_pdf!==false?"checked":""}></div>
+     ${W.isNew?"":`<button class="btn ghost block" data-w="delete" style="color:var(--danger);margin-top:14px">Delete scene</button>`}`;
+  }
+  return "";
+}
+const tsDigits=t=>t==null?"":(String(Math.floor(t/60))+String(t%60).padStart(2,"0")).replace(/^0+/,"");
+function typeDigit(n){ const d=W.draft; let digits=W.fresh?"":tsDigits(d.timestamp); W.fresh=false; digits=(digits+n).slice(-4); const v=parseInt(digits||"0"); let m=Math.floor(v/100), s=v%100; d.timestamp=m*60+s; W.rawSec=s; renderWizard(); }
+function typeDel(){ const d=W.draft; W.fresh=false; let digits=tsDigits(d.timestamp).slice(0,-1); if(!digits){ d.timestamp=null; renderWizard(); return; } const v=parseInt(digits); d.timestamp=Math.floor(v/100)*60+v%100; renderWizard(); }
+function wizNext(){
+  if(W.steps[W.step]==="time" && W.qmode){ W.step=W.steps.indexOf("feedback"); renderWizard(); setTimeout(()=>{ const el=$("#w_question_text"); el&&el.scrollIntoView({block:"center"}); },30); return; }
+  if(W.step<W.steps.length-1){ W.step++; renderWizard(); $("#wbody").scrollTop=0; }
+}
+function wizInput(e){
+  const d=W.draft, id=e.target.id;
+  const map={w_observation_text:"observation_text",w_focus_text:"focus_text",w_question_text:"question_text",w_result_text:"result_text",w_custom_notes:"custom_notes",w_xquix_note:"xquix_note",w_facts_text:"facts_text",w_speccustom:"specific_custom",w_sitother:"specific_custom"};
+  if(map[id]) d[map[id]]=e.target.value;
+  if(id==="w_xq"){ d.xquix_simulation=e.target.checked; renderWizard(); }
+  if(id==="w_inc"){ d.include_in_pdf=e.target.checked; }
+}
+function toggleSit(v){
+  const d=W.draft; let chain=sitChain(d); chain=chain.includes(v)?chain.filter(x=>x!==v):chain.concat([v]);
+  d.situation_primary=chain[0]||""; d.situation_secondary=chain.slice(1);
+  // drop specifics that no longer belong
+  const allowed=new Set(chain.flatMap(x=>SPECIFIC[x]||[]).concat(["Custom"])); d.specific=d.specific.filter(x=>allowed.has(x));
+  computeSteps();
+}
+function wizSave(andNew){
+  const d=W.draft, c=W.c;
+  if(d.timestamp==null){ W.step=0; renderWizard(); toast("Enter the scene time first"); return; }
+  const mk=d._mark; delete d._mark;
+  if(mk){
+    const g=c.games.find(x=>x.id===d.game_id);
+    // first imported mark of a game sets its sync point; a corrected time re-syncs it
+    if(g&&mk.occurred_at&&mk.how!=="tracker"&&(!g.sync||d.timestamp!==mk.computed)) g.sync={at:mk.occurred_at,video_sec:d.timestamp};
+    MARKS=MARKS.filter(x=>x.id!==mk.id); updateInbox();
+    setMarkStatus(mk.id,"imported",c.id+"/"+d.id);
+  }
+  ensureCategory(d);
+  const sg=suggestText(d); if(!d.observation_text.trim()&&sg.observation) d.observation_text=sg.observation; if(!d.focus_text.trim()&&sg.focus) d.focus_text=sg.focus;
+  if(!d.facts_edited) d.facts_text="";
+  d.feedback_tags=[d.observation_text&&"OBSERVATION",d.focus_text&&"FOCUS",d.question_text&&"QUESTION",d.result_text&&"RESULT"].filter(Boolean);
+  const i=c.scenes.findIndex(s=>s.id===d.id);
+  if(i>=0) c.scenes[i]=d; else c.scenes.push(d);
+  // recent feedback
+  const rec=(S.prefs.recent||[]).filter(r=>!d.goalie_actions.includes(r)); S.prefs.recent=d.goalie_actions.slice().reverse().concat(rec).slice(0,24); touchPrefs();
+  UI.gameId=d.game_id; touchCheck(c); buzz();
+  const ts=fmtTs(d.timestamp); closeWizard(); UI.tab="scenes"; render(); toast("Scene "+ts+" saved");
+  if(andNew) openWizard(c,null);
+}
+function wizClick(e){
+  const d=W.draft, t=e.target;
+  const go=t.closest("[data-go]"); if(go){ W.step=+go.dataset.go; renderWizard(); return; }
+  const key=t.closest("[data-key]"); if(key){ const k=key.dataset.key; if(k==="del") typeDel(); else if(k==="clr"){ d.timestamp=null; W.fresh=false; renderWizard(); } else typeDigit(+k); return; }
+  const adj=t.closest("[data-adj]"); if(adj){ d.timestamp=Math.max(0,(d.timestamp||0)+(+adj.dataset.adj)); W.fresh=true; renderWizard(); return; }
+  const wg=t.closest("[data-wgame]"); if(wg){ d.game_id=wg.dataset.wgame; renderWizard(); return; }
+  const sit=t.closest("[data-sit]"); if(sit){ toggleSit(sit.dataset.sit); buzz(); renderWizard(); return; }
+  const sp=t.closest("[data-spec]"); if(sp){ const v=sp.dataset.spec; d.specific=d.specific.includes(v)?d.specific.filter(x=>x!==v):d.specific.concat([v]); buzz(); renderWizard(); return; }
+  const single=(attr,field,auto)=>{ const b=t.closest(`[data-${attr}]`); if(!b) return false; const v=b.dataset[attr]; d[field]=d[field]===v?"":v; buzz(); renderWizard(); return true; };
+  if(single("opos","offensive_position")) return;
+  if(single("dist","distance")) return;
+  if(single("stype","shot_type")) return;
+  if(single("sex","shot_extra")) return;
+  if(single("odet","outcome_detail")) return;
+  const dir=t.closest("[data-dir]"); if(dir){ const v=dir.dataset.dir; d.shot_direction=d.shot_direction===v?"":v; buzz(); if(d.shot_direction&&ST().auto_advance){ W.step++; renderWizard(); $("#wbody").scrollTop=0; } else renderWizard(); return; }
+  const out=t.closest("[data-out]"); if(out){ const v=out.dataset.out; d.outcome=d.outcome===v?"":v; if(d.outcome!=="BLOCK + CONTROL") d.outcome_detail=""; buzz(); if(d.outcome&&d.outcome!=="BLOCK + CONTROL"&&ST().auto_advance){ W.step++; renderWizard(); $("#wbody").scrollTop=0; } else renderWizard(); return; }
+  const grp=t.closest("[data-grp]"); if(grp){ const k=grp.dataset.grp; const sel=d.goalie_actions; const cur=W.openGroups[k]??(sel.some(a=>(ACT[a]?ACT[a].group:"mine")===k)); W.openGroups[k]=!cur; renderWizard(); return; }
+  const a2=t.closest("[data-act2]"); if(a2){ const v=a2.dataset.act2; d.goalie_actions=d.goalie_actions.includes(v)?d.goalie_actions.filter(x=>x!==v):d.goalie_actions.concat([v]); const g=ACT[v]?ACT[v].group:"mine"; W.openGroups[g]=true; buzz(); const st=$("#wbody").scrollTop; renderWizard(); $("#wbody").scrollTop=st; return; }
+  const fav=t.closest("[data-fav]"); if(fav){ const f=(S.prefs.favorites||[]).find(x=>x.id===fav.dataset.fav); if(f){ f.chips.forEach(ch=>{ if(!d.goalie_actions.includes(ch)) d.goalie_actions.push(ch); const g=ACT[ch]?ACT[ch].group:"mine"; W.openGroups[g]=true; if(!ACT[ch]&&!(S.prefs.phrases||[]).includes(ch)){ S.prefs.phrases=(S.prefs.phrases||[]).concat([ch]); touchPrefs(); } }); (f.questions||[]).forEach(q=>{ if(!d.question_text.split("\n").includes(q)) d.question_text=(d.question_text?d.question_text+"\n":"")+q; }); buzz(); toast("Applied “"+f.name+"”"+(f.questions&&f.questions.length?" · questions added":"")); } const st=$("#wbody").scrollTop; renderWizard(); $("#wbody").scrollTop=st; return; }
+  const ot=t.closest("[data-otype]"); if(ot){ const [a,ty]=ot.dataset.otype.split("|"); d.action_types={...d.action_types,[a]:ty}; const st=$("#wbody").scrollTop; renderWizard(); $("#wbody").scrollTop=st; return; }
+  const use=t.closest("[data-use]"); if(use){ const k=use.dataset.use; const s=suggestText(d); d[k]=k==="observation_text"?s.observation:s.focus; const st=$("#wbody").scrollTop; renderWizard(); $("#wbody").scrollTop=st; return; }
+  const q=t.closest("[data-q]"); if(q){ const v=q.dataset.q; if(!d.question_text.split("\n").includes(v)) d.question_text=(d.question_text?d.question_text+"\n":"")+v; const st=$("#wbody").scrollTop; renderWizard(); $("#wbody").scrollTop=st; return; }
+  const w=t.closest("[data-w]"); if(!w) return;
+  const k=w.dataset.w;
+  if(k==="close"){ closeWizard(); return; }
+  if(k==="back"){ if(W.step>0){ W.step--; renderWizard(); } return; }
+  if(k==="next"){ wizNext(); return; }
+  if(k==="save"){ wizSave(false); return; }
+  if(k==="saveNew"){ wizSave(true); return; }
+  if(k==="useAll"){ const s=suggestText(d); if(s.observation) d.observation_text=s.observation; if(s.focus) d.focus_text=s.focus; renderWizard(); return; }
+  if(k==="factsEdit"){ d.facts_text=autoFacts(d).join("\n"); d.facts_edited=true; renderWizard(); return; }
+  if(k==="factsAuto"){ d.facts_edited=false; d.facts_text=""; renderWizard(); return; }
+  if(k==="cat"){ pickCategory(d.primary_category,cat=>{ d.primary_category=cat; d.category_manual=true; renderWizard(); }); return; }
+  if(k==="catAuto"){ d.category_manual=false; d.primary_category=""; renderWizard(); return; }
+  if(k==="delete"){ const c=W.c, sid=d.id; closeWizard(); deleteScene(c,sid); return; }
+  if(k==="addPhrase") return textAsk("Add coaching phrase","e.g. Avoid early arm reaction",v=>{ if(!(S.prefs.phrases||[]).includes(v)) S.prefs.phrases=(S.prefs.phrases||[]).concat([v]); touchPrefs(); d.goalie_actions.push(v); W.openGroups.mine=true; renderWizard(); });
+  if(k==="saveFav") return textAsk("Save favorite","Name, e.g. Leg first",v=>{ const qs=d.question_text.split("\n").map(x=>x.trim()).filter(Boolean); S.prefs.favorites=(S.prefs.favorites||[]).concat([{id:uid(),name:v,chips:d.goalie_actions.slice(),questions:qs}]); touchPrefs(); toast("Favorite “"+v+"” saved"); renderWizard(); });
+}
+function textAskValue(title,val,ph,fn){ textAsk(title,ph,fn); setTimeout(()=>{ const el=$("#ask_in"); if(el){ el.value=val||""; el.select(); } },45); }
+function textAsk(title,ph,fn){
+  const m=modal(`<h3>${esc(title)}</h3><input id="ask_in" placeholder="${esc(ph)}" autocomplete="off"><div class="grid2" style="margin-top:12px"><button class="btn ghost" data-c="no">Cancel</button><button class="btn primary" data-c="ok">Save</button></div>`,(e,mm)=>{
+    const b=e.target.closest("[data-c]"); if(!b) return; const v=$("#ask_in").value.trim(); if(b.dataset.c==="ok"&&!v) return; mm.remove(); if(b.dataset.c==="ok") fn(v); });
+  setTimeout(()=>$("#ask_in").focus(),40);
+}
+
+/* ---------------- SETTINGS ---------------- */
+function settingsView(){
+  const s=ST(); const sw=(k,l,sub)=>`<div class="switch"><span><b>${l}</b>${sub?`<br><span class="note">${sub}</span>`:""}</span><input type="checkbox" data-set="${k}" ${s[k]?"checked":""}></div>`;
+  return topBar("Settings","Game Video Check",`<button class="iconbtn" data-act="back" aria-label="Back">${IC.back}</button>`)+
+  `<main class="gutter" style="padding-bottom:40px">
+   <div class="sect">PDF</div>
+   ${sw("pdf_logo","Logo on cover")}${sw("pdf_small_logo","Small logo on content pages")}
+   <div class="switch"><span><b>Maximum scenes per page</b><br><span class="note">Fewer when scenes have more text. Text is never shrunk to fit.</span></span><div class="seg">${[2,3,4].map(n=>`<button data-max="${n}" class="${s.pdf_max===n?"on":""}">${n}</button>`).join("")}</div></div>
+   ${sw("pdf_summary","Include final summary","Counts of repeated feedback only, no conclusions")}${sw("pdf_xquix","Include XquiX labels")}${sw("pdf_game_id","Show game on every scene")}
+   <div class="sect">Entry</div>
+   ${sw("learn","Suggest typical feedback for the situation","Learned from the scenes you saved: what you chose most often in similar situations")}${sw("show_recent","Show recent feedback")}${sw("auto_advance","Auto-advance after outcome")}${sw("haptic","Haptic feedback","Where the device supports it")}
+   <div class="sect">Favorites</div>
+   ${(S.prefs.favorites||[]).map(f=>`<div class="catrow"><div class="nm">★ ${esc(f.name)}<div class="note" style="font-weight:400">${esc(f.chips.concat(f.questions||[]).join(" → "))}</div></div><button class="btn ghost sm" data-delfav="${f.id}">Remove</button></div>`).join("")||'<p class="note">Save favorites from the Goalie step.</p>'}
+   <div class="sect">My coaching phrases</div>
+   <div class="chips">${(S.prefs.phrases||[]).map(p=>`<button class="chip" data-delphrase="${esc(p)}">${esc(p)} ✕</button>`).join("")}<button class="chip fav" data-act="addPhrase">+ Add phrase</button></div>
+   <div class="sect">Custom situations</div>
+   <div class="chips">${(S.prefs.situations||[]).map(p=>`<button class="chip" data-delsit="${esc(p)}">${esc(p)} ✕</button>`).join("")}<button class="chip fav" data-act="addSit">+ Add situation</button></div>
+   <div class="sect">Custom categories</div>
+   <div class="chips">${(S.prefs.cats||[]).map(p=>`<button class="chip" data-delcat="${esc(p)}">${esc(p)} ✕</button>`).join("")}<button class="chip fav" data-act="addCat">+ Add category</button></div>
+   <div class="sect">Account & sync</div>
+   <div class="cloud"><span class="dot ${CLOUD==="ok"?"ok":CLOUD==="denied"?"bad":"warn"}"></span><div style="min-width:0"><b>${esc(USER&&USER.email||"")}</b><div class="note">${esc(syncLabel())}. ${CLOUD==="ok"?"Your Game Checks are stored in XquiX Studio’s database under this account, so phone and Mac show the same data.":CLOUD==="setup"?"XquiX Studio hasn’t created Game Check’s tables yet. Everything is kept on this device and uploads automatically once they exist.":CLOUD==="denied"?"This account doesn’t have the Game Check permission yet. Everything is kept on this device until it does.":"Everything is kept on this device and uploads when the connection is back."}</div></div></div>
+   <div class="cloud"><span class="dot ${MARKS_STATE==="live"||MARKS_STATE==="ok"?"ok":"warn"}"></span><div><b>Game Tracker inbox</b><div class="note">${MARKS_STATE==="live"?"Connected live.":MARKS_STATE==="ok"?"Connected, checking every 30 seconds.":MARKS_STATE==="setup"?"Waiting for XquiX Studio to set up marked scenes.":"Not connected right now."}</div></div></div>
+   <div class="sect">Data</div>
+   <button class="btn ghost block" data-act="backup">Save a backup (.json)</button>
+   <label class="btn ghost block" for="imp_file" style="margin-top:10px;cursor:pointer">Import a backup (.json)</label><input id="imp_file" type="file" accept=".json,application/json" hidden>
+   <p class="note">Use Import once to bring over the Game Checks from the earlier claude.ai version: there, open Settings → Download a backup, then import that file here. Nothing is overwritten that is newer here.</p>
+   <button class="btn ghost block" data-act="signout" style="margin-top:14px;color:var(--danger)">Sign out</button>
+  </main>`;
+}
+function bindSettings(){
+  const app=$("#app");
+  app.onchange=e=>{ const k=e.target.dataset.set; if(k){ ST()[k]=e.target.checked; touchPrefs(); }
+    if(e.target.id==="imp_file"&&e.target.files[0]){ const f=e.target.files[0]; f.text().then(importBackup).catch(()=>toast("That file couldn’t be read")); e.target.value=""; } };
+  app.onclick=async e=>{
+    const mx=e.target.closest("[data-max]"); if(mx){ ST().pdf_max=+mx.dataset.max; touchPrefs(); render(); return; }
+    const df=e.target.closest("[data-delfav]"); if(df){ S.prefs.favorites=S.prefs.favorites.filter(f=>f.id!==df.dataset.delfav); touchPrefs(); render(); return; }
+    const dp=e.target.closest("[data-delphrase]"); if(dp){ S.prefs.phrases=S.prefs.phrases.filter(p=>p!==dp.dataset.delphrase); touchPrefs(); render(); return; }
+    const ds=e.target.closest("[data-delsit]"); if(ds){ S.prefs.situations=S.prefs.situations.filter(p=>p!==ds.dataset.delsit); touchPrefs(); render(); return; }
+    const dc=e.target.closest("[data-delcat]"); if(dc){ S.prefs.cats=S.prefs.cats.filter(p=>p!==dc.dataset.delcat); touchPrefs(); render(); return; }
+    const a=e.target.closest("[data-act]"); if(!a) return; const k=a.dataset.act;
+    if(k==="back"){ UI.view=UI.prev==="check"&&CK()?"check":"home"; render(); }
+    if(k==="addPhrase") textAsk("Add coaching phrase","e.g. Post-skip trajectory",v=>{ S.prefs.phrases=(S.prefs.phrases||[]).concat([v]); touchPrefs(); render(); });
+    if(k==="addSit") textAsk("Add situation","e.g. 6 vs 5 counter",v=>{ S.prefs.situations=(S.prefs.situations||[]).concat([v]); touchPrefs(); render(); });
+    if(k==="addCat") textAsk("Add category","e.g. Penalty Preparation",v=>{ S.prefs.cats=(S.prefs.cats||[]).concat([v]); touchPrefs(); render(); });
+    if(k==="backup"){ const r=await deliverFile("Game Video Check backup "+new Date().toISOString().slice(0,10)+".json",new Blob([JSON.stringify({checks:S.checks,prefs:S.prefs},null,1)],{type:"application/json"})); if(r==="needs-tap") toast("Tap Save a backup again"); }
+    if(k==="signout"){ const n=dirty.size; confirmBox("Sign out?",(n?"Some changes haven’t reached the cloud yet and will be lost. ":"")+"Game Checks are removed from this device and stay in your account.","Sign out",async()=>{ try{ await sb.auth.signOut(); }catch(e){} try{ localStorage.removeItem(STORE_KEY); localStorage.removeItem(STORE_KEY+"_ui"); localStorage.removeItem(STORE_KEY+"_owner"); }catch(e){} location.reload(); }); }
+  };
+}
+
+/* ---------------- files: share sheet on iPhone, download elsewhere ---------------- */
+const IS_TOUCH=matchMedia("(pointer:coarse)").matches;
+async function deliverFile(filename,blob){
+  const file=new File([blob],filename,{type:blob.type||"application/octet-stream"});
+  if(IS_TOUCH&&navigator.canShare&&navigator.canShare({files:[file]})){
+    try{ await navigator.share({files:[file],title:filename}); return "shared"; }
+    catch(e){ if(e&&e.name==="AbortError") return "cancelled"; if(e&&e.name==="NotAllowedError") return "needs-tap"; }
+  }
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=filename; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },4000); return "downloaded";
+}
+
+function importBackup(text){
+  let d; try{ d=JSON.parse(text); }catch(e){ toast("That isn’t a Game Check backup"); return; }
+  if(!d||typeof d!=="object"||!d.checks){ toast("That isn’t a Game Check backup"); return; }
+  let added=0, updated=0;
+  Object.values(d.checks).forEach(c=>{ if(!c||!c.id||!Array.isArray(c.scenes)) return; const loc=S.checks[c.id];
+    if(!loc){ S.checks[c.id]=c; added++; markDirty(c.id); } else if((c.updated_at||"")>(loc.updated_at||"")){ S.checks[c.id]=c; updated++; markDirty(c.id); } });
+  if(d.prefs){ const p=d.prefs; const merged=(a,b,key)=>{ const out=(a||[]).slice(); (b||[]).forEach(x=>{ const k=key?x[key]:x; if(!out.some(y=>(key?y[key]:y)===k)) out.push(x); }); return out; };
+    S.prefs.favorites=merged(S.prefs.favorites,p.favorites,"name"); S.prefs.phrases=merged(S.prefs.phrases,p.phrases); S.prefs.situations=merged(S.prefs.situations,p.situations); S.prefs.cats=merged(S.prefs.cats,p.cats);
+    if((p.updated_at||"")>(S.prefs.updated_at||"")) S.prefs.settings={...S.prefs.settings,...(p.settings||{})}; touchPrefs(); }
+  saveLocal(); render(); toast(`Imported: ${added} new, ${updated} updated`);
+}
+
+/* ---------------- PDF ---------------- */
+let libsP=null;
+function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement("script"); s.src=src; s.onload=res; s.onerror=()=>rej(new Error("load "+src)); document.head.appendChild(s); }); }
+function loadLibs(){
+  if(!libsP) libsP=(async()=>{
+    await loadScript("vendor/jspdf.umd.min.js");
+    await loadScript("vendor/pdf.min.js");
+    pdfjsLib.GlobalWorkerOptions.workerSrc="vendor/pdf.worker.min.js";
+  })().catch(e=>{ libsP=null; throw e; });
+  return libsP;
+}
+const C_NAVY=[38,37,53], C_TEAL=[30,206,203], C_TEALINK=[11,132,129], C_TINT=[232,248,248], C_TEXT=[38,37,53], C_MUTED=[93,101,115], C_LINE=[205,232,232];
+function pdfModel(c){
+  const inc=sortedScenes(c).filter(s=>s.include_in_pdf!==false);
+  inc.forEach(ensureCategory);
+  const byCat={}; inc.forEach(s=>{ (byCat[s.primary_category]=byCat[s.primary_category]||[]).push(s); });
+  // manual order inside category (sort_order) then game/time
+  Object.values(byCat).forEach(l=>l.sort((a,b)=>((a.sort_order||0)-(b.sort_order||0))||gameIndex(c,a.game_id)-gameIndex(c,b.game_id)||a.timestamp-b.timestamp));
+  const present=Object.keys(byCat);
+  const ord=(c.pdf_settings.cat_order||[]).filter(k=>present.includes(k));
+  cats().concat(present).forEach(k=>{ if(present.includes(k)&&!ord.includes(k)) ord.push(k); });
+  return {order:ord,byCat,count:inc.length};
+}
+function catTitle(c,k){ return (c.pdf_settings.cat_titles&&c.pdf_settings.cat_titles[k])||k; }
+const PDFSAFE=t=>String(t??"").replace(/\s*→\s*/g," › ").replace(/−/g,"-").replace(/[\u2009\u202F]/g," ");
+function buildPdf(c){
+  const {jsPDF}=window.jspdf; const doc=new jsPDF({unit:"pt",format:"letter"});
+  const _t=doc.text.bind(doc), _s=doc.splitTextToSize.bind(doc);
+  doc.text=(t,...a)=>_t(Array.isArray(t)?t.map(PDFSAFE):PDFSAFE(t),...a); doc.splitTextToSize=(t,...a)=>_s(PDFSAFE(t),...a);
+  const PW=612, PH=792, M=48, CW=PW-2*M, set=ST();
+  const model=pdfModel(c); const multi=c.games.length>1;
+  const setC=(a,k="setTextColor")=>doc[k](a[0],a[1],a[2]);
+  // ---- cover
+  if(set.pdf_logo) doc.addImage(LOGO,"PNG",PW/2-75,120,150,150*552/400);
+  let y=set.pdf_logo?120+207+70:240;
+  doc.setFont("helvetica","bold"); doc.setFontSize(34); setC(C_NAVY);
+  const nameLines=doc.splitTextToSize(c.athlete_name.toUpperCase(),CW); doc.text(nameLines,PW/2,y,{align:"center"}); y+=nameLines.length*38;
+  doc.setFontSize(15); setC(C_TEALINK); doc.text("GAME VIDEO CHECK",PW/2,y,{align:"center",charSpace:3}); y+=14;
+  doc.setDrawColor(...C_TEAL); doc.setLineWidth(2); doc.line(PW/2-40,y,PW/2+40,y); y+=34;
+  c.games.forEach((g,i)=>{
+    doc.setFont("helvetica","bold"); doc.setFontSize(12.5); setC(C_NAVY);
+    const t=doc.splitTextToSize((multi?`Game ${i+1}: `:"")+gameLabel(g),CW-40); doc.text(t,PW/2,y,{align:"center"}); y+=t.length*16;
+    const sub=[fmtDate(g.date),g.level,g.location].filter(Boolean).join("  ·  ");
+    if(sub){ doc.setFont("helvetica","normal"); doc.setFontSize(10.5); setC(C_MUTED); doc.text(sub,PW/2,y,{align:"center"}); y+=15; }
+    y+=10;
+  });
+  doc.setFont("helvetica","normal"); doc.setFontSize(10.5); setC(C_MUTED);
+  doc.text(`${model.count} Scene${model.count===1?"":"s"} Reviewed`,PW/2,Math.max(y+10,PH-110),{align:"center"});
+  if(c.games.some(g=>g.video_url)) doc.text("Tap a scene time to open the video at that moment.",PW/2,Math.max(y+10,PH-110)+15,{align:"center"});
+  // ---- content pages
+  const pages=[]; // {cat, cards:[{s,h,fs}]}
+  const HEAD=128, FOOT=40, avail=PH-HEAD-FOOT-M*0.4, GAP=12;
+  const measure=(s,fs)=>cardLayout(doc,c,s,fs,CW,multi&&set.pdf_game_id,set.pdf_xquix);
+  model.order.forEach(k=>{
+    let cur=null;
+    model.byCat[k].forEach(s=>{
+      let fs=9.5, L=measure(s,fs); while(L.h>avail&&fs>7){ fs-=0.5; L=measure(s,fs); }
+      const used=cur?cur.cards.reduce((a,x)=>a+x.L.h+GAP,0):0;
+      if(!cur||s.page_break_before||cur.cards.length>=set.pdf_max||used+L.h>avail){ cur={cat:k,cards:[],cont:!!cur}; pages.push(cur); }
+      cur.cards.push({s,L});
+    });
+  });
+  pages.forEach(p=>{
+    doc.addPage(); drawHeader(doc,c,p,PW,M,multi,set);
+    let yy=HEAD; p.cards.forEach(({s,L})=>{ L.draw(yy,M); yy+=L.h+GAP; });
+  });
+  if(set.pdf_summary&&model.count){ doc.addPage(); drawSummary(doc,c,model,PW,M,CW,multi,set); }
+  // footers
+  const n=doc.getNumberOfPages();
+  for(let i=2;i<=n;i++){ doc.setPage(i); doc.setFont("helvetica","normal"); doc.setFontSize(8); setC(C_MUTED);
+    doc.text(`The Perfect Goalie®  ·  Game Video Check  ·  ${c.athlete_name}`,M,PH-24); doc.text(`${i} / ${n}`,PW-M,PH-24,{align:"right"}); }
+  return {doc,pages,model};
+}
+function drawHeader(doc,c,p,PW,M,multi,set){
+  const setC=a=>doc.setTextColor(a[0],a[1],a[2]);
+  if(set.pdf_small_logo) doc.addImage(LOGO,"PNG",PW-M-30,30,30,30*552/400);
+  doc.setFont("helvetica","bold"); doc.setFontSize(8.5); setC(C_TEALINK); doc.text("GAME VIDEO CHECK",M,40,{charSpace:1.6});
+  doc.setFontSize(10); setC(C_NAVY); doc.text(c.athlete_name.toUpperCase(),M+118,40);
+  const gids=[...new Set(p.cards.map(x=>x.s.game_id))];
+  const gtxt=gids.map(id=>{ const i=gameIndex(c,id), g=c.games[i]; return (multi?`Game ${i+1}: `:"")+gameLabel(g,true)+(g.date?` (${fmtDate(g.date)})`:""); }).join("   ·   ");
+  doc.setFont("helvetica","normal"); doc.setFontSize(8.5); setC(C_MUTED);
+  doc.text(doc.splitTextToSize(gtxt,PW-2*M-44)[0]||"",M,54);
+  doc.setFont("helvetica","bold"); doc.setFontSize(19); setC(C_NAVY);
+  const title=catTitle(c,p.cat)+(p.cont?" (continued)":""); const tl=doc.splitTextToSize(title,PW-2*M-44).slice(0,2); doc.text(tl,M,82);
+  const ty=82+(tl.length-1)*21;
+  doc.setDrawColor(...C_TEAL); doc.setLineWidth(2); doc.line(M,ty+9,M+44,ty+9);
+  doc.setFont("helvetica","normal"); doc.setFontSize(9); setC(C_MUTED);
+  let hx=M; doc.text("Scenes:  ",hx,ty+24); hx+=doc.getTextWidth("Scenes:  ");
+  p.cards.forEach((x,i)=>{ const lab=(multi&&set.pdf_game_id?"G"+(gameIndex(c,x.s.game_id)+1)+" ":"")+fmtTs(x.s.timestamp); const u=videoAt((c.games[gameIndex(c,x.s.game_id)]||{}).video_url,x.s.timestamp);
+    if(u){ setC(C_TEALINK); doc.text(lab,hx,ty+24); doc.link(hx-1,ty+15,doc.getTextWidth(lab)+2,12,{url:u}); setC(C_MUTED); } else doc.text(lab,hx,ty+24);
+    hx+=doc.getTextWidth(lab); if(i<p.cards.length-1){ doc.text("  •  ",hx,ty+24); hx+=doc.getTextWidth("  •  "); } });
+}
+function cardLayout(doc,c,s,fs,CW,showGame,showX){
+  const P=12, IW=CW-2*P, lh=fs*1.38, ops=[];
+  const vurl=videoAt((c.games[gameIndex(c,s.game_id)]||{}).video_url,s.timestamp);
+  let h=P;
+  const head="SCENE "+fmtTs(s.timestamp)+"  |  "+sceneHeadline(s);
+  doc.setFont("helvetica","bold"); doc.setFontSize(fs+1.5);
+  const gtag=showGame?("G"+(gameIndex(c,s.game_id)+1)):"";
+  const hl=doc.splitTextToSize(head,IW-(gtag?30:0));
+  ops.push({t:"head",lines:hl,y:h}); h+=hl.length*(fs+1.5)*1.3;
+  if(s.xquix_simulation&&showX){ ops.push({t:"xtag",y:h}); }
+  h+=4;
+  const fx=facts(s); doc.setFont("helvetica","normal"); doc.setFontSize(fs);
+  fx.forEach(f=>{ const ls=doc.splitTextToSize(f,IW-12); ops.push({t:"bullet",lines:ls,y:h}); h+=ls.length*lh; });
+  const blocks=[["OBSERVATION",s.observation_text],["FOCUS",s.focus_text],["QUESTION",s.question_text],["RESULT",s.result_text]];
+  if(s.xquix_simulation&&showX) blocks.push(["XQUIX STUDIO SIMULATION",s.xquix_note||""]);
+  blocks.forEach(([lab,txt])=>{
+    if(!txt||!txt.trim()){ if(lab!=="XQUIX STUDIO SIMULATION") return; }
+    h+=7; ops.push({t:"label",text:lab,y:h}); h+=fs*1.2;
+    doc.setFont("helvetica","normal"); doc.setFontSize(fs);
+    const paras=(txt||"").split("\n").map(x=>x.trim()).filter(Boolean);
+    paras.forEach(pp=>{ const ls=doc.splitTextToSize(pp,IW); ops.push({t:"text",lines:ls,y:h,label:lab}); h+=ls.length*lh; });
+  });
+  h+=P-2;
+  return {h,fs,draw:(y0,x0)=>{
+    doc.setFillColor(...C_TINT); doc.setDrawColor(...C_LINE); doc.setLineWidth(0.6); doc.roundedRect(x0,y0,CW,h,6,6,"FD");
+    ops.forEach(o=>{
+      const yy=y0+o.y;
+      if(o.t==="head"){ doc.setFont("helvetica","bold"); doc.setFontSize(fs+1.5); doc.setTextColor(...C_NAVY); o.lines.forEach((l,i)=>doc.text(l,x0+P,yy+(fs+1.5)*(0.95+i*1.3)));
+        if(vurl){ const tsw=doc.getTextWidth("SCENE "+fmtTs(s.timestamp)); doc.setDrawColor(...C_TEAL); doc.setLineWidth(1.2); doc.line(x0+P,yy+(fs+1.5)*0.95+2.2,x0+P+tsw,yy+(fs+1.5)*0.95+2.2); doc.link(x0+P-2,yy-1,tsw+4,(fs+1.5)*1.25,{url:vurl}); }
+        if(gtag){ doc.setFillColor(...C_NAVY); doc.roundedRect(x0+CW-P-24,yy+1,24,fs+4,3,3,"F"); doc.setFontSize(fs-1.5); doc.setTextColor(255,255,255); doc.text(gtag,x0+CW-P-12,yy+fs*0.98,{align:"center"}); } }
+      if(o.t==="bullet"){ doc.setFont("helvetica","normal"); doc.setFontSize(fs); doc.setTextColor(...C_TEXT); doc.text("•",x0+P,yy+fs); o.lines.forEach((l,i)=>doc.text(l,x0+P+12,yy+fs+i*lh)); }
+      if(o.t==="label"){ doc.setFont("helvetica","bold"); doc.setFontSize(fs-1.5); doc.setTextColor(...C_TEALINK); doc.text(o.text,x0+P,yy+fs-1,{charSpace:1.1}); }
+      if(o.t==="text"){ doc.setFont("helvetica",o.label==="QUESTION"?"bolditalic":"normal"); doc.setFontSize(fs); doc.setTextColor(...C_TEXT); o.lines.forEach((l,i)=>doc.text(l,x0+P,yy+fs+i*lh)); }
+    });
+  }};
+}
+function drawSummary(doc,c,model,PW,M,CW,multi,set){
+  const setC=a=>doc.setTextColor(a[0],a[1],a[2]);
+  if(set.pdf_small_logo) doc.addImage(LOGO,"PNG",PW-M-30,30,30,30*552/400);
+  doc.setFont("helvetica","bold"); doc.setFontSize(8.5); setC(C_TEALINK); doc.text("GAME VIDEO CHECK",M,40,{charSpace:1.6});
+  doc.setFontSize(10); setC(C_NAVY); doc.text(c.athlete_name.toUpperCase(),M+118,40);
+  doc.setFontSize(19); doc.text("Summary of Recurring Feedback",M,82); doc.setDrawColor(...C_TEAL); doc.setLineWidth(2); doc.line(M,91,M+44,91);
+  let y=118;
+  model.order.forEach(k=>{
+    const list=model.byCat[k]; const cnt={}; list.forEach(s=>s.goalie_actions.forEach(a=>cnt[a]=(cnt[a]||0)+1));
+    const rep=Object.entries(cnt).filter(([,n])=>n>=2).sort((a,b)=>b[1]-a[1]);
+    const qn=list.filter(s=>s.question_text&&s.question_text.trim()).length;
+    const lines=[`${list.length} scene${list.length===1?"":"s"}: ${list.map(s=>(multi?"G"+(gameIndex(c,s.game_id)+1)+" ":"")+fmtTs(s.timestamp)).join(", ")}.`];
+    rep.forEach(([a,n])=>lines.push(`“${a}” selected in ${n} scenes.`));
+    if(qn) lines.push(`${qn} scene${qn===1?"":"s"} with questions for discussion.`);
+    doc.setFont("helvetica","normal"); doc.setFontSize(9.5);
+    const wrapped=lines.map(l=>doc.splitTextToSize(l,CW-12)); const need=16+wrapped.reduce((a,w)=>a+w.length*13,0)+10;
+    if(y+need>792-60){ doc.addPage(); y=60; }
+    doc.setFont("helvetica","bold"); doc.setFontSize(9); setC(C_TEALINK); doc.text(catTitle(c,k).toUpperCase(),M,y,{charSpace:1}); y+=15;
+    doc.setFont("helvetica","normal"); doc.setFontSize(9.5); setC(C_TEXT);
+    wrapped.forEach(w=>{ doc.text("•",M,y); w.forEach((l,i)=>doc.text(l,M+12,y+i*13)); y+=w.length*13; });
+    y+=12;
+  });
+}
+function pdfFilename(c){
+  if(c.pdf_settings.filename&&c.pdf_settings.filename.trim()) return c.pdf_settings.filename.trim().replace(/\.pdf$/i,"")+".pdf";
+  let id;
+  if(c.games.length>1) id=c.games.map(g=>(g.team||gameLabel(g,true).split(/\s+/)[0]||"Game")).join(" + ");
+  else { const d=(c.games[0]||{}).date; id=d?d.replace(/-/g,""):new Date().toISOString().slice(0,10).replace(/-/g,""); }
+  return `Game Check ${c.athlete_name} ${id}.pdf`.replace(/[\\/:*?"<>|]/g,"-");
+}
+
+/* ---------------- PREVIEW ---------------- */
+function previewTab(c){
+  const model=pdfModel(c);
+  if(!model.count) return `<div class="empty"><div class="big">Nothing to preview yet</div><p>Add scenes first. Each scene is placed into its category automatically.</p></div>`;
+  return `<div class="row" style="justify-content:space-between;margin-bottom:10px"><h2>Preview</h2><span class="muted" id="pv_info" style="font-size:14px">Building…</span></div>
+   <div id="thumbs" class="thumbs"></div>
+   <div class="sect">Categories & scenes</div>
+   <p class="note" style="margin-top:0">Pages follow the category order. Rename a category heading for this PDF, move scenes, or start a new page before a scene.</p>
+   <div id="pv_list">${model.order.map((k,i)=>`<div class="card" style="margin-bottom:10px">
+     <div class="catrow" style="border:0;padding-top:0"><div class="nm"><input data-cattitle="${esc(k)}" id="ct_${i}" value="${esc(catTitle(c,k))}" aria-label="Heading for ${esc(k)}" style="font-weight:700"></div>
+     <div class="row" style="gap:4px;flex-wrap:nowrap"><button class="btn ghost sm" data-pv="up" data-k="${esc(k)}" ${i===0?"disabled style='opacity:.35'":""} aria-label="Move category up">↑</button><button class="btn ghost sm" data-pv="down" data-k="${esc(k)}" ${i===model.order.length-1?"disabled style='opacity:.35'":""} aria-label="Move category down">↓</button></div></div>
+     ${model.byCat[k].map((s,j)=>`<div class="pscene"><div class="ts" style="font-size:18px">${fmtTs(s.timestamp)}${c.games.length>1?`<div class="muted" style="font-size:12px;font-family:var(--body)">G${gameIndex(c,s.game_id)+1}</div>`:""}</div><div style="min-width:0"><div class="sline" style="font-size:15px">${esc(sceneHeadline(s))}</div>
+       <div class="ctl"><button class="btn ghost sm" data-pv="edit" data-sid="${s.id}">Edit</button><button class="btn ghost sm" data-pv="cat" data-sid="${s.id}">Category</button>
+       ${j>0?`<button class="btn ghost sm" data-pv="sup" data-sid="${s.id}" aria-label="Move scene up">↑</button>`:""}
+       ${j>0?`<button class="btn ghost sm ${s.page_break_before?"":""}" data-pv="pb" data-sid="${s.id}" style="${s.page_break_before?"background:var(--sel);color:var(--sel-fg)":""}">${s.page_break_before?"New page ✓":"New page"}</button>`:""}
+       <button class="btn ghost sm" data-pv="rm" data-sid="${s.id}">Remove</button></div></div></div>`).join("")}</div>`).join("")}
+   ${c.scenes.some(s=>s.include_in_pdf===false)?`<div class="sect">Not in PDF</div>${c.scenes.filter(s=>s.include_in_pdf===false).map(s=>`<div class="pscene"><div class="ts" style="font-size:18px">${fmtTs(s.timestamp)}</div><div><div class="sline" style="font-size:15px">${esc(sceneHeadline(s))}</div><div class="ctl"><button class="btn ghost sm" data-pv="add" data-sid="${s.id}">Add back</button></div></div></div>`).join("")}`:""}
+   </div>
+   <div class="sect">Export</div>
+   <label class="f" for="pf_name">File name</label><input id="pf_name" value="${esc(c.pdf_settings.filename||"")}" placeholder="${esc(pdfFilename({...c,pdf_settings:{...c.pdf_settings,filename:""}}))}">
+   <button class="btn primary block" data-act="genpdf" style="min-height:62px;font-size:21px;margin-top:12px">Generate final PDF</button>
+   <button class="btn navy block" data-act="present" style="margin-top:10px">▶ Present on Mac / Zoom</button>
+   <p class="note" id="pv_note">${IS_TOUCH?"On iPhone the share sheet opens: AirDrop, Mail, Messages or Save to Files.":"The PDF downloads to your Downloads folder."}</p>`;
+}
+let pvTimer=null, pvRun=0, lastPdf=null;
+function schedulePreview(c){ clearTimeout(pvTimer); pvTimer=setTimeout(()=>buildPreview(c),700); }
+async function buildPreview(c){
+  const info=$("#pv_info"), th=$("#thumbs"); if(!th) return; const run=++pvRun;
+  try{ await loadLibs(); }catch(e){ info.textContent="PDF tools didn’t load. Check the connection and open Preview again."; return; }
+  if(run!==pvRun) return;
+  const {doc,pages}=buildPdf(c); const buf=doc.output("arraybuffer"); lastPdf={buf,c:c.id};
+  const n=doc.getNumberOfPages(); info.textContent=`${n} page${n===1?"":"s"} · ${pdfModel(c).count} scenes`;
+  try{
+    const pdf=await pdfjsLib.getDocument({data:new Uint8Array(buf.slice(0))}).promise;
+    if(run!==pvRun) return; th.innerHTML="";
+    for(let i=1;i<=pdf.numPages;i++){
+      const page=await pdf.getPage(i); const vp=page.getViewport({scale:0.42*(window.devicePixelRatio>1?2:1)});
+      const cv=document.createElement("canvas"); cv.width=vp.width; cv.height=vp.height;
+      const box=document.createElement("button"); box.className="thumb"; box.setAttribute("aria-label","Page "+i); box.appendChild(cv); box.insertAdjacentHTML("beforeend",`<span class="pn">${i}</span>`);
+      box.onclick=()=>bigPage(pdf,i); th.appendChild(box);
+      await page.render({canvasContext:cv.getContext("2d"),viewport:vp}).promise; if(run!==pvRun) return;
+    }
+  }catch(e){ th.innerHTML=`<p class="note">Page thumbnails couldn’t be drawn here, but the PDF itself is ready to generate.</p>`; }
+}
+async function bigPage(pdf,i){
+  const L=$("#layer"); const b=document.createElement("div"); b.className="bigview"; b.innerHTML=`<button class="x" aria-label="Close">✕</button>`; L.appendChild(b);
+  b.querySelector(".x").onclick=()=>b.remove();
+  const page=await pdf.getPage(i); const w=Math.min(760,window.innerWidth-24); const vp0=page.getViewport({scale:1}); const vp=page.getViewport({scale:(w/vp0.width)*(window.devicePixelRatio||1)});
+  const cv=document.createElement("canvas"); cv.width=vp.width; cv.height=vp.height; b.appendChild(cv); await page.render({canvasContext:cv.getContext("2d"),viewport:vp}).promise;
+}
+function previewAction(c,b){
+  const k=b.dataset.pv, s=b.dataset.sid?c.scenes.find(x=>x.id===b.dataset.sid):null;
+  if(k==="up"||k==="down"){ const ord=pdfModel(c).order; const i=ord.indexOf(b.dataset.k), j=k==="up"?i-1:i+1; [ord[i],ord[j]]=[ord[j],ord[i]]; c.pdf_settings.cat_order=ord; }
+  if(k==="edit"){ openWizard(c,s.id); return; }
+  if(k==="cat"){ pickCategory(s.primary_category,cat=>{ s.primary_category=cat; s.category_manual=true; touchCheck(c); render(); }); return; }
+  if(k==="rm") s.include_in_pdf=false;
+  if(k==="add") s.include_in_pdf=true;
+  if(k==="pb") s.page_break_before=!s.page_break_before;
+  if(k==="sup"){ const m=pdfModel(c); const list=m.byCat[s.primary_category]; const i=list.indexOf(s); list.splice(i,1); list.splice(i-1,0,s); list.forEach((x,n)=>x.sort_order=n+1); }
+  touchCheck(c); const y=window.scrollY; render(); window.scrollTo(0,y);
+}
+async function exportPdf(c){
+  const note=$("#pv_note");
+  try{ await loadLibs(); }catch(e){ note.textContent="PDF tools didn’t load. Check the connection and try again."; return; }
+  const {doc}=buildPdf(c); const blob=doc.output("blob"); const fn=pdfFilename(c);
+  const done=r=>{ if(r==="cancelled"){ note.textContent="Sharing cancelled. Tap Generate final PDF to try again."; return; }
+    note.innerHTML=`<b>${esc(fn)}</b> ${r==="shared"?"shared":"downloaded"}.`;
+    if(c.status!=="final"){ note.insertAdjacentHTML("beforeend",` <button class="btn ghost sm" id="mkfinal" style="margin-top:8px">Mark as Finalized</button>`); $("#mkfinal").onclick=()=>{ c.status="final"; touchCheck(c); toast("Marked as Finalized"); $("#mkfinal").remove(); }; } };
+  const r=await deliverFile(fn,blob);
+  if(r==="needs-tap"){ note.innerHTML=`PDF ready. <button class="btn primary sm" id="sharenow" style="margin-top:8px">Share PDF</button>`; $("#sharenow").onclick=async()=>done(await deliverFile(fn,blob)); return; }
+  done(r);
+}
+
+
+/* ---------------- INBOX (marked in the Game Tracker) ---------------- */
+function inboxBtn(){ const n=MARKS.length; return `<button class="iconbtn inboxbtn" data-inbox aria-label="Inbox from Game Tracker">${IC.inbox}<span class="badge" ${n?"":"hidden"}>${n>99?"99+":n}</span></button>`; }
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-inbox]"); if(b){ e.preventDefault(); e.stopPropagation(); openInbox(); } },true);
+function markWhen(m){
+  const parts=[];
+  if(m.video_time_sec!=null) parts.push("Video "+fmtTs(m.video_time_sec));
+  if(m.period) parts.push((m.period>4?"OT":"Q"+m.period)+(m.game_clock?" "+m.game_clock:""));
+  else if(m.game_clock) parts.push(m.game_clock);
+  if(!parts.length&&m.occurred_at) parts.push(new Date(m.occurred_at).toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"}));
+  return parts.join(" · ")||"Marked";
+}
+function markWhat(m){ return [m.situation,m.shooter_position&&("Pos "+m.shooter_position),m.distance_m,m.shot_type,m.shot_direction,m.outcome].filter(Boolean).join(" · ")||"No details"; }
+function openInbox(){
+  if(W) return;
+  const L=$("#layer"); L.querySelector(".inbox")?.remove();
+  const sh=document.createElement("div"); sh.className="sheet inbox"; L.appendChild(sh); document.body.style.overflow="hidden";
+  sh.addEventListener("click",inboxClick); drawInbox(); loadMarks();
+}
+function closeInbox(){ $("#layer .inbox")?.remove(); if(!W) document.body.style.overflow=""; }
+function drawInbox(){
+  const sh=$("#layer .inbox"); if(!sh) return;
+  let body="";
+  if(!USER) body=`<div class="empty"><div class="big">Not signed in</div></div>`;
+  else if(MARKS_STATE==="setup") body=`<div class="empty"><div class="big">Waiting for XquiX Studio</div><p>The inbox connects once XquiX Studio has set up the marked-scenes table. Everything else in Game Check already works.</p></div>`;
+  else if(MARKS_STATE==="offline") body=`<div class="empty"><div class="big">Offline</div><p>Marked scenes appear here when you’re back online.</p></div>`;
+  else if(MARKS_STATE==="error") body=`<div class="empty"><div class="big">Inbox not reachable</div><p>Try again in a moment. If it keeps happening, the Game Check account may not have access to marked scenes yet.</p></div>`;
+  else if(!MARKS.length) body=`<div class="empty"><div class="big">No new marks</div><p>Tap <b>Mark for Game Check</b> on an event in the XquiX Studio Game Tracker. It appears here within seconds.</p></div>`;
+  else {
+    const groups={}; MARKS.forEach(m=>{ const k=m.tracker_game_id||"?"; (groups[k]=groups[k]||[]).push(m); });
+    body=Object.values(groups).map(list=>{ const g=list[0];
+      return `<div class="gamehead"><h3>${esc(g.game_label||[g.team,g.opponent].filter(Boolean).join(" vs. ")||"Game")}</h3><span class="muted" style="font-size:14px">${g.game_date?esc(fmtDate(g.game_date))+" · ":""}${list.length}</span></div>
+      <div class="stack" style="gap:8px">${list.map(m=>`<div class="markcard"><div class="row" style="justify-content:space-between;flex-wrap:nowrap"><div class="when">${esc(markWhen(m))}</div>${m.goalie_name?`<span class="pill prog">${esc(m.goalie_name)}</span>`:""}</div>
+        <div class="what">${esc(markWhat(m))}</div>${m.note?`<div class="meta">“${esc(m.note)}”</div>`:""}
+        <div class="grid2"><button class="btn ghost sm" data-mk="dismiss" data-id="${esc(m.id)}">Dismiss</button><button class="btn primary sm" data-mk="use" data-id="${esc(m.id)}">Create scene</button></div></div>`).join("")}</div>`; }).join("");
+  }
+  const where=UI.view==="check"&&CK()?`Scenes go into <b>${esc(CK().athlete_name)}</b>’s Game Check.`:`You choose the Game Check when you create a scene.`;
+  sh.innerHTML=`<div class="shead gutter"><div class="row"><button class="iconbtn" data-mk="close" aria-label="Close inbox">${IC.close}</button>
+    <div style="flex:1;min-width:0"><div class="eyebrow">From the Game Tracker</div><div class="athlete" style="font-size:20px">Inbox${MARKS.length?" · "+MARKS.length:""}</div></div></div>
+    <div class="summary">${MARKS.length?where:"Marks you set in the XquiX Studio Game Tracker."}</div></div>
+    <div class="sbody2 gutter"><div>${body}</div></div>`;
+}
+async function inboxClick(e){
+  const b=e.target.closest("[data-mk]"); if(!b) return;
+  const k=b.dataset.mk; if(k==="close"){ closeInbox(); return; }
+  const m=MARKS.find(x=>x.id===b.dataset.id); if(!m) return;
+  if(k==="dismiss"){
+    MARKS=MARKS.filter(x=>x!==m); updateInbox();
+    const ok=await setMarkStatus(m.id,"dismissed");
+    if(!ok){ MARKS.push(m); updateInbox(); toast("Couldn’t dismiss. Check the connection."); return; }
+    toast("Mark dismissed",async()=>{ if(await setMarkStatus(m.id,"new")) loadMarks(); });
+  }
+  if(k==="use") useMark(m);
+}
+function useMark(m){
+  const go=c=>pickGameForMark(c,m,g=>{
+    const draft=markToDraft(m,g,c);
+    closeInbox(); UI.checkId=c.id; UI.gameId=g.id; UI.view="check"; UI.tab="scenes"; saveLocal(); render();
+    openWizard(c,null,{draft});
+  });
+  if(UI.view==="check"&&CK()) return go(CK());
+  const list=Object.values(S.checks).filter(c=>!c.deleted).sort((a,b)=>(b.updated_at||"").localeCompare(a.updated_at||""));
+  modal(`<h3>Which Game Check?</h3><div class="menu">${list.map(c=>`<button data-pc="${c.id}">${esc(c.athlete_name)} · ${esc(c.games.map(g=>gameLabel(g,true)).join(", "))}</button>`).join("")}<button data-pc="__new">+ New Game Video Check${m.goalie_name?" for "+esc(m.goalie_name):""}</button></div>`,(e,mm)=>{
+    const b=e.target.closest("[data-pc]"); if(!b) return; mm.remove();
+    if(b.dataset.pc!=="__new") return go(S.checks[b.dataset.pc]);
+    textAskValue("Athlete name",m.goalie_name||"","e.g. Llewyn Thurston",name=>{
+      const g=gameFromMark(m);
+      const c={id:uid(),athlete_id:uid(),athlete_name:name,nickname:"",position:"Goalkeeper",created_at:now(),updated_at:now(),status:"progress",games:[g],scenes:[],pdf_settings:{cat_order:[],cat_titles:{},filename:""}};
+      S.checks[c.id]=c; touchCheck(c); go(c);
+    });
+  });
+}
+function gameFromMark(m){ return {id:uid(),title:m.game_label||[m.team,m.opponent].filter(Boolean).join(" vs. ")||"Game",team:m.team||"",opponent:m.opponent||"",date:m.game_date||"",level:"",location:"",video_name:"",video_url:m.video_url||"",notes:"",sort_order:0,tracker_game_id:m.tracker_game_id}; }
+function pickGameForMark(c,m,fn){
+  const hit=c.games.find(g=>g.tracker_game_id&&g.tracker_game_id===m.tracker_game_id); if(hit) return fn(hit);
+  modal(`<h3>Which game is this?</h3><p class="note" style="margin:0 0 8px">Marked in: <b>${esc(m.game_label||"Game Tracker game")}</b>${m.game_date?" · "+esc(fmtDate(m.game_date)):""}. Your choice is remembered for this game’s other marks.</p>
+    <div class="menu">${c.games.map((g,i)=>`<button data-pg="${g.id}">G${i+1} · ${esc(gameLabel(g,true))}${g.tracker_game_id?' <span class="muted">(linked to another tracker game)</span>':""}</button>`).join("")}<button data-pg="__new">+ Add as new game</button></div>`,(e,mm)=>{
+    const b=e.target.closest("[data-pg]"); if(!b) return; mm.remove();
+    let g;
+    if(b.dataset.pg==="__new"){ g=gameFromMark(m); g.sort_order=c.games.length; c.games.push(g); }
+    else { g=c.games.find(x=>x.id===b.dataset.pg); g.tracker_game_id=m.tracker_game_id; if(!g.video_url&&m.video_url) g.video_url=m.video_url; }
+    touchCheck(c); fn(g);
+  });
+}
+const DIR_EXTRA={"post":"Post","over goal":"Over Goal","wide":"Wide","blocked before goal":"Blocked before goal"};
+function pickVocab(list,v){ if(!v) return ""; const s=String(v).trim().toLowerCase(); return list.find(x=>x.toLowerCase()===s)||""; }
+function markToDraft(m,g,c){
+  const d=emptyScene(g.id); const un=[];
+  const sit=pickVocab(SITUATIONS.concat(S.prefs.situations||[]),m.situation); if(sit) d.situation_primary=sit; else if(m.situation) un.push("situation “"+m.situation+"”");
+  const pos=pickVocab(POSITIONS,m.shooter_position); if(pos) d.offensive_position=pos; else if(m.shooter_position) un.push("shooter “"+m.shooter_position+"”");
+  const dist=pickVocab(DISTANCES,m.distance_m)||pickVocab(DISTANCES,m.distance_m&&String(m.distance_m).replace(/\s*m$/i,"")+"m"); if(dist) d.distance=dist; else if(m.distance_m) un.push("distance “"+m.distance_m+"”");
+  const st=pickVocab(SHOT_TYPES,m.shot_type); if(st) d.shot_type=st; else if(m.shot_type) un.push("shot type “"+m.shot_type+"”");
+  if(m.shot_direction){ const s=String(m.shot_direction).trim(); const ex=DIR_EXTRA[s.toLowerCase()];
+    const grid=["Left High","Middle High","Right High","Left Middle","Center","Right Middle","Left Low","Middle Low","Right Low"];
+    const gv=pickVocab(grid,s); if(gv) d.shot_direction=gv; else if(ex) d.shot_extra=ex; else un.push("direction “"+s+"”"); }
+  const out=pickVocab(OUTCOMES,m.outcome); if(out) d.outcome=out; else if(m.outcome) un.push("outcome “"+m.outcome+"”");
+  // video time: from the Tracker, or from this game's sync point
+  let ts=null, how="";
+  if(m.video_time_sec!=null){ ts=Math.max(0,Math.round(m.video_time_sec)); how="tracker"; }
+  else if(g.sync&&g.sync.at&&m.occurred_at){ ts=Math.max(0,Math.round(g.sync.video_sec+(new Date(m.occurred_at)-new Date(g.sync.at))/1000)); how="sync"; }
+  d.timestamp=ts; d.mark_id=m.id;
+  d._mark={id:m.id,occurred_at:m.occurred_at||null,when:markWhen(m),note:m.note||"",unmapped:un,how,computed:ts};
+  return d;
+}
+function markBanner(d){
+  const k=d._mark; if(!k) return "";
+  const time=k.how==="tracker"?"Video time from the Tracker."
+    :k.how==="sync"?"Video time calculated from this game’s sync point. Check it against the video; a correction re-syncs the game."
+    :k.occurred_at?"Type the video time of this moment. It becomes this game’s sync point, and later marks get their time calculated.":"Type the video time of this moment.";
+  return `<div class="markinfo"><b>From the Game Tracker · ${esc(k.when)}</b><br>${time}${k.note?`<br>Your note: “${esc(k.note)}”`:""}${k.unmapped.length?`<br>Not matched to a tile: ${esc(k.unmapped.join(", "))}.`:""}</div>`;
+}
+
+/* ---------------- SIGN IN ---------------- */
+let AUTH_MSG=null;
+function authView(){
+  const mode=UI.authMode||"in";
+  const title=mode==="up"?"Create account":mode==="reset"?"Reset password":"Sign in";
+  return `<main class="gutter"><div class="auth">
+    <img class="logo" src="icons/logo.png" alt="The Perfect Goalie">
+    <h1>Game Video Check</h1><div class="sub">${esc(title)} with your Game Check account</div>
+    ${!sb?`<div class="msg err">The sign-in service didn’t load. Check the connection and reload.</div>`:""}
+    ${AUTH_MSG?`<div class="msg ${AUTH_MSG.err?"err":""}">${esc(AUTH_MSG.text)}</div>`:""}
+    <form id="authform" class="stack" novalidate>
+      <div><label class="f" for="au_email">Email</label><input id="au_email" type="email" autocomplete="username" inputmode="email" value="${esc(UI.authEmail||"")}" required></div>
+      ${mode!=="reset"?`<div><label class="f" for="au_pw">Password</label><input id="au_pw" type="password" autocomplete="${mode==="up"?"new-password":"current-password"}" minlength="8" required></div>`:""}
+      ${mode==="up"?`<div><label class="f" for="au_pw2">Repeat password</label><input id="au_pw2" type="password" autocomplete="new-password" minlength="8" required></div>`:""}
+      <button class="btn primary block" type="submit" id="au_go">${mode==="up"?"Create account":mode==="reset"?"Send reset link":"Sign in"}</button>
+    </form>
+    <div class="row" style="justify-content:space-between">
+      ${mode!=="in"?`<button class="linkbtn" data-am="in">Back to sign in</button>`:`<button class="linkbtn" data-am="up">Create account</button><button class="linkbtn" data-am="reset">Forgot password?</button>`}
+    </div>
+  </div></main>`;
+}
+function bindAuth(){
+  const app=$("#app");
+  app.onclick=e=>{ const b=e.target.closest("[data-am]"); if(b){ UI.authEmail=($("#au_email")||{}).value||UI.authEmail; UI.authMode=b.dataset.am; AUTH_MSG=null; render(); } };
+  $("#authform").onsubmit=async e=>{
+    e.preventDefault(); if(!sb) return;
+    const mode=UI.authMode||"in", email=$("#au_email").value.trim(), pw=($("#au_pw")||{}).value||"";
+    UI.authEmail=email; const go=$("#au_go"); go.disabled=true; go.textContent="One moment…";
+    const say=(text,err)=>{ AUTH_MSG={text,err}; render(); };
+    if(!email) return say("Enter your email address.",true);
+    try{
+      if(mode==="in"){ if(!pw) return say("Enter your password.",true); const {error}=await sb.auth.signInWithPassword({email,password:pw}); if(error) return say(/confirm/i.test(error.message)?"Confirm your email first: open the link in the email you received, then sign in here.":"That email and password don’t match. Try again or reset your password.",true); AUTH_MSG=null; }
+      else if(mode==="up"){ if(pw.length<8) return say("Use at least 8 characters for the password.",true); if(pw!==$("#au_pw2").value) return say("The two passwords don’t match.",true);
+        const {data,error}=await sb.auth.signUp({email,password:pw,options:{emailRedirectTo:SITE_URL}}); if(error) return say(error.message,true);
+        if(!data.session){ UI.authMode="in"; return say("Account created. Open the confirmation link in the email we sent, then sign in here."); } AUTH_MSG=null; }
+      else { const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:SITE_URL}); if(error) return say(error.message,true); UI.authMode="in"; return say("If that email has an account, a reset link is on its way."); }
+    }catch(err){ return say("No connection to the sign-in service. Check the connection and try again.",true); }
+  };
+}
+function setPwView(){
+  return `<main class="gutter"><div class="auth"><img class="logo" src="icons/logo.png" alt=""><h1>New password</h1>
+   ${AUTH_MSG?`<div class="msg ${AUTH_MSG.err?"err":""}">${esc(AUTH_MSG.text)}</div>`:""}
+   <form id="pwform" class="stack" novalidate><div><label class="f" for="np1">New password</label><input id="np1" type="password" autocomplete="new-password" minlength="8"></div>
+   <div><label class="f" for="np2">Repeat password</label><input id="np2" type="password" autocomplete="new-password" minlength="8"></div>
+   <button class="btn primary block" type="submit">Save password</button></form></div></main>`;
+}
+function bindSetPw(){
+  $("#pwform").onsubmit=async e=>{ e.preventDefault(); const a=$("#np1").value,b=$("#np2").value;
+    if(a.length<8){ AUTH_MSG={text:"Use at least 8 characters.",err:true}; return render(); }
+    if(a!==b){ AUTH_MSG={text:"The two passwords don’t match.",err:true}; return render(); }
+    const {error}=await sb.auth.updateUser({password:a}); if(error){ AUTH_MSG={text:error.message,err:true}; return render(); }
+    AUTH_MSG=null; UI.view="home"; render(); toast("Password saved"); };
+}
+
+/* ---------------- PRESENT MODE (Mac / Zoom) ---------------- */
+let P=null;
+function videoAt(url,sec){
+  if(!url) return "";
+  try{
+    const u=new URL(url); const h=u.hostname.replace(/^www\.|^m\./,"");
+    if(h==="youtube.com"||h==="youtu.be"||h==="music.youtube.com"){ u.searchParams.delete("t"); u.searchParams.delete("start"); u.searchParams.set("t",sec+"s"); return u.toString(); }
+    if(h==="vimeo.com"||h==="player.vimeo.com"){ u.hash="t="+sec+"s"; return u.toString(); }
+    return url;
+  }catch(e){ return url; }
+}
+function presentSlides(c){
+  const m=pdfModel(c); const slides=[{t:"cover"}];
+  m.order.forEach(k=>{ slides.push({t:"chap",cat:k,scenes:m.byCat[k]}); m.byCat[k].forEach(s=>slides.push({t:"scene",cat:k,s})); });
+  return slides;
+}
+function openPresent(c){
+  if(!c) return;
+  P={c,i:0,slides:presentSlides(c),refresh(){ const cur=this.slides[this.i]; this.c=S.checks[this.c.id]; this.slides=presentSlides(this.c); if(cur&&cur.s){ const j=this.slides.findIndex(x=>x.s&&x.s.id===cur.s.id); if(j>=0) this.i=j; } this.i=Math.min(this.i,this.slides.length-1); drawPresent(); }};
+  const el=document.createElement("div"); el.className="pres"; el.setAttribute("role","dialog"); el.setAttribute("aria-label","Game Video Check presentation"); $("#layer").appendChild(el);
+  document.body.style.overflow="hidden";
+  el.addEventListener("click",presClick);
+  document.addEventListener("keydown",presKey);
+  drawPresent();
+}
+function closePresent(){ document.removeEventListener("keydown",presKey); $("#layer .pres")?.remove(); document.body.style.overflow=""; P=null; try{ if(document.fullscreenElement) document.exitFullscreen(); }catch(e){} render(); }
+function presKey(e){
+  if(!P) return; if(e.target.closest&&e.target.closest("input,textarea")) return;
+  if(["ArrowRight","PageDown"," ","Enter"].includes(e.key)){ e.preventDefault(); presGo(P.i+1); }
+  else if(["ArrowLeft","PageUp","Backspace"].includes(e.key)){ e.preventDefault(); presGo(P.i-1); }
+  else if(e.key==="Home"){ presGo(0); } else if(e.key==="End"){ presGo(P.slides.length-1); }
+  else if(e.key==="Escape"&&!document.fullscreenElement){ closePresent(); }
+  else if(e.key==="f"||e.key==="F"){ toggleFs(); }
+  else if(e.key==="v"||e.key==="V"){ const a=$("#layer .pres .vlink"); if(a) a.click(); }
+}
+function toggleFs(){ try{ if(document.fullscreenElement) document.exitFullscreen(); else $("#layer .pres").requestFullscreen().catch(()=>toast("Full screen isn’t available here. Use the browser’s own full-screen mode.")); }catch(e){ toast("Full screen isn’t available here."); } }
+function presGo(i){ if(!P) return; P.i=Math.max(0,Math.min(P.slides.length-1,i)); drawPresent(); const st=$("#layer .pres .stage"); if(st) st.scrollTop=0; }
+function presClick(e){
+  const b=e.target.closest("[data-p]"); if(!b) return; const k=b.dataset.p;
+  if(k==="close") closePresent(); else if(k==="prev") presGo(P.i-1); else if(k==="next") presGo(P.i+1);
+  else if(k==="fs") toggleFs(); else if(k==="go") presGo(+b.dataset.i);
+  else if(k==="cat"){ presGo(P.slides.findIndex(x=>x.t==="chap"&&x.cat===b.dataset.cat)); }
+}
+function drawPresent(){
+  const el=$("#layer .pres"); if(!el||!P) return;
+  const c=P.c, sl=P.slides[P.i], multi=c.games.length>1, set=ST();
+  const sceneSlides=P.slides.filter(x=>x.t==="scene"); const sn=sl.t==="scene"?sceneSlides.indexOf(sl)+1:0;
+  const cats=[...new Set(P.slides.filter(x=>x.t==="chap").map(x=>x.cat))];
+  let body="";
+  if(sl.t==="cover"){
+    body=`<div class="slide cover">${set.pdf_logo?`<img src="${LOGO}" alt="The Perfect Goalie">`:""}<div class="nm">${esc(c.athlete_name)}</div><div class="sub">Game Video Check</div>
+      <div class="gm">${c.games.map((g,i)=>`${multi?`<b>Game ${i+1}:</b> `:""}${esc(gameLabel(g))}${g.date?` <span>· ${esc(fmtDate(g.date))}</span>`:""}`).join("<br>")}</div>
+      <div class="gm"><span>${sceneSlides.length} scenes reviewed · ${cats.length} topics</span></div></div>`;
+  } else if(sl.t==="chap"){
+    body=`<div class="slide chap"><div class="catname">Topic ${cats.indexOf(sl.cat)+1} of ${cats.length}</div><div class="t">${esc(catTitle(c,sl.cat))}</div>
+      <div class="list">${sl.scenes.map(s=>`<button data-p="go" data-i="${P.slides.findIndex(x=>x.s===s)}">${multi?`G${gameIndex(c,s.game_id)+1} · `:""}${fmtTs(s.timestamp)}<small>${esc(sceneHeadline(s))}</small></button>`).join("")}</div></div>`;
+  } else {
+    const s=sl.s, g=c.games[gameIndex(c,s.game_id)]||{};
+    const blocks=[["Observation",s.observation_text,""],["Focus",s.focus_text,""],["Question",s.question_text,"q"],["Result",s.result_text,""]].filter(x=>x[1]&&x[1].trim());
+    if(s.xquix_simulation&&set.pdf_xquix) blocks.push(["XquiX Studio Simulation",s.xquix_note||"","x"]);
+    const vurl=videoAt(g.video_url,s.timestamp);
+    const len=blocks.reduce((a,b)=>a+b[1].length,0);
+    const fs=len>700?"clamp(17px,1.4vw,22px)":len>380?"clamp(19px,1.6vw,25px)":"";
+    body=`<div class="slide"><div class="catname">${esc(catTitle(c,sl.cat))}</div>
+      <div class="phead">${vurl?`<a class="bigts tslink" href="${esc(vurl)}" target="_blank" rel="noopener" title="Open the video at ${fmtTs(s.timestamp)}">${fmtTs(s.timestamp)}<span class="tsplay">▶</span></a>`:`<div class="bigts">${fmtTs(s.timestamp)}</div>`}<div class="hl">${esc(sceneHeadline(s))}${multi?` <span class="gtag">G${gameIndex(c,s.game_id)+1} · ${esc(gameLabel(g,true))}</span>`:""}</div></div>
+      <div class="cols"><div><div class="facts"><h4>Scene</h4><ul>${facts(s).map(f=>`<li>${esc(f)}</li>`).join("")||"<li>—</li>"}</ul></div>
+        ${vurl?`<a class="vlink" href="${esc(vurl)}" target="_blank" rel="noopener">▶ Video at ${fmtTs(s.timestamp)}</a>`:""}</div>
+      <div style="${fs?`--pfs:${fs}`:""}">${blocks.map(([h,t,cl])=>`<div class="blk ${cl}"><h4>${esc(h)}</h4>${t.split("\n").map(x=>x.trim()).filter(Boolean).map(x=>`<p>${esc(x)}</p>`).join("")}</div>`).join("")||'<p class="muted">No coaching text for this scene.</p>'}</div></div></div>`;
+  }
+  el.innerHTML=`<div class="pbar"><img src="${LOGO}" alt=""><div class="who"><div class="e">Game Video Check</div><div class="n">${esc(c.athlete_name)}</div></div>
+    <div class="count">${sl.t==="scene"?`Scene ${sn} / ${sceneSlides.length}`:""}</div>
+    <button class="pbtn" data-p="fs" title="Full screen (F)">Full screen</button><button class="pbtn" data-p="close" title="Exit (Esc)">Exit</button></div>
+   <div class="stage">${body}</div>
+   <div class="pfoot"><button class="nav" data-p="prev" aria-label="Previous" ${P.i===0?"disabled":""}>‹</button>
+     <div class="chips2">${cats.map(k=>`<button data-p="cat" data-cat="${esc(k)}" class="${sl.cat===k?"on":""}">${esc(catTitle(c,k))}</button>`).join("")}</div>
+     <span class="keys">← → to move · V video · F full screen</span>
+     <button class="nav" data-p="next" aria-label="Next" ${P.i===P.slides.length-1?"disabled":""}>›</button></div>`;
+  el.querySelector(".chips2 .on")?.scrollIntoView({block:"nearest",inline:"center"});
+}
+
+if("serviceWorker" in navigator&&location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
+initAuth();
+</script>
+</body>
+</html>
