@@ -1434,7 +1434,39 @@ function pickGameForMark(c,m,fn){
 }
 const DIR_EXTRA={"post":"Post","over goal":"Over Goal","wide":"Wide","blocked before goal":"Blocked before goal"};
 function pickVocab(list,v){ if(!v) return ""; const s=String(v).trim().toLowerCase(); return list.find(x=>x.toLowerCase()===s)||""; }
-function markToDraft(m,g,c){
+// XquiX Studio Game Tracker (schema xgt-mark-1) speaks its own terms; translate before matching tiles
+const TRACKER_INFO=new Set(["shot","steal","regular possession","outlet pass"]); // understood, nothing to unmatch
+function normalizeTrackerMark(m){
+  const x=Object.assign({},m), e=(m.extra&&typeof m.extra==="object")?m.extra:{}, low=v=>String(v||"").trim().toLowerCase();
+  const info=[];
+  // situation: the Tracker names the action; only "Outlet Pass" is also a Game Check situation
+  if(["shot","steal"].includes(low(m.situation))){ info.push(m.situation); x.situation=""; }
+  // shooter position: "Zone 4" -> 4 (field zones 1-6 are the shooting positions)
+  const z=String(m.shooter_position||"").match(/^\s*zone\s*(\d+)\s*$/i);
+  if(z){ const n=+z[1]; x.shooter_position=n>=1&&n<=6?String(n):""; if(!(n>=1&&n<=6)) info.push("Zone "+n); }
+  // shot type
+  const st={regular:"Direct",direct:"Direct",skip:"Skip",lob:"Lob",penalty:"Penalty",rebound:"Rebound","quick finish":"Quick Finish","catch & shoot":"Catch & Shoot","catch and shoot":"Catch & Shoot",turn:"Turn"}[low(m.shot_type)];
+  if(st) x.shot_type=st;
+  // direction: Top/Middle/Bottom + Left/Center/Right -> Game Check grid
+  const dir=low(m.shot_direction||(e.goalPlacement&&e.goalPlacement.label)).replace(/_/g," ");
+  const dm=dir.match(/^(top|high|middle|mid|center|bottom|low)\s+(left|center|centre|middle|right)$/);
+  if(dm){ const row={top:"High",high:"High",middle:"Middle",mid:"Middle",center:"Middle",bottom:"Low",low:"Low"}[dm[1]], col={left:"Left",right:"Right",center:"Middle",centre:"Middle",middle:"Middle"}[dm[2]];
+    x.shot_direction=(row==="Middle"&&col==="Middle")?"Center":(col==="Middle"?"Middle "+row:col+" "+row); }
+  // outcome
+  const oc=low(m.outcome), br=low(e.blockResult);
+  if(oc==="blocked / save"||oc==="blocked"||oc==="save"){ x.outcome=br==="gk_in"?"BLOCK + CONTROL":/rebound/.test(br)?"BLOCK + REBOUND":"BLOCK"; if(br==="gk_in") x._control="Clean catch/control"; }
+  else if(oc==="steal") x.outcome="STEAL";
+  else if(oc==="goal"||oc==="direct goal") x.outcome=low(m.situation)==="outlet pass"?"":"GOAL";
+  if(low(m.situation)==="outlet pass"&&m.outcome){ info.push(m.outcome); if(x.outcome==="") x.outcome=""; else if(!["STEAL"].includes(x.outcome)) x.outcome=""; }
+  // outlet pass type -> specific detail tile
+  const pt=e.outlet&&low(e.outlet.passTypeLabel||e.outlet.passType);
+  x._spec=pt?({"lead pass":"Lead pass",lead:"Lead pass","wet pass":"Wet pass",wet:"Wet pass","dry pass":"Dry pass",dry:"Dry pass","long pass":"Long pass",long:"Long pass","short pass":"Short pass",short:"Short pass"}[pt]||""):"";
+  if(pt&&!x._spec) info.push(e.outlet.passTypeLabel||e.outlet.passType);
+  x._info=info;
+  return x;
+}
+function markToDraft(m0,g,c){
+  const m=normalizeTrackerMark(m0);
   const d=emptyScene(g.id); const un=[];
   const sit=pickVocab(SITUATIONS.concat(S.prefs.situations||[]),m.situation); if(sit) d.situation_primary=sit; else if(m.situation) un.push("situation “"+m.situation+"”");
   const pos=pickVocab(POSITIONS,m.shooter_position); if(pos) d.offensive_position=pos; else if(m.shooter_position) un.push("shooter “"+m.shooter_position+"”");
@@ -1444,12 +1476,14 @@ function markToDraft(m,g,c){
     const grid=["Left High","Middle High","Right High","Left Middle","Center","Right Middle","Left Low","Middle Low","Right Low"];
     const gv=pickVocab(grid,s); if(gv) d.shot_direction=gv; else if(ex) d.shot_extra=ex; else un.push("direction “"+s+"”"); }
   const out=pickVocab(OUTCOMES,m.outcome); if(out) d.outcome=out; else if(m.outcome) un.push("outcome “"+m.outcome+"”");
+  if(m._control&&d.outcome==="BLOCK + CONTROL") d.outcome_detail=m._control;
+  if(m._spec&&d.situation_primary) d.specific=[m._spec];
   // video time: from the Tracker, or from this game's sync point
   let ts=null, how="";
   if(m.video_time_sec!=null){ ts=Math.max(0,Math.round(m.video_time_sec)); how="tracker"; }
   else if(g.sync&&g.sync.at&&m.occurred_at){ ts=Math.max(0,Math.round(g.sync.video_sec+(new Date(m.occurred_at)-new Date(g.sync.at))/1000)); how="sync"; }
   d.timestamp=ts; d.mark_id=m.id;
-  d._mark={id:m.id,occurred_at:m.occurred_at||null,when:markWhen(m),note:m.note||"",unmapped:un,how,computed:ts};
+  d._mark={id:m.id,occurred_at:m.occurred_at||null,when:markWhen(m0),note:m.note||"",unmapped:un,info:m._info||[],how,computed:ts};
   return d;
 }
 function markBanner(d){
@@ -1457,7 +1491,7 @@ function markBanner(d){
   const time=k.how==="tracker"?"Video time from the Tracker."
     :k.how==="sync"?"Video time calculated from this game’s sync point. Check it against the video; a correction re-syncs the game."
     :k.occurred_at?"Type the video time of this moment. It becomes this game’s sync point, and later marks get their time calculated.":"Type the video time of this moment.";
-  return `<div class="markinfo"><b>From the Game Tracker · ${esc(k.when)}</b><br>${time}${k.note?`<br>Your note: “${esc(k.note)}”`:""}${k.unmapped.length?`<br>Not matched to a tile: ${esc(k.unmapped.join(", "))}.`:""}</div>`;
+  return `<div class="markinfo"><b>From the Game Tracker · ${esc(k.when)}</b><br>${time}${k.info&&k.info.length?`<br>Tracker: ${esc(k.info.join(" · "))}`:""}${k.note?`<br>Your note: “${esc(k.note)}”`:""}${k.unmapped.length?`<br>Not matched to a tile: ${esc(k.unmapped.join(", "))}.`:""}</div>`;
 }
 
 /* ---------------- SIGN IN ---------------- */
