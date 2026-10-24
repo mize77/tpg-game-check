@@ -1435,33 +1435,62 @@ function pickGameForMark(c,m,fn){
 const DIR_EXTRA={"post":"Post","over goal":"Over Goal","wide":"Wide","blocked before goal":"Blocked before goal"};
 function pickVocab(list,v){ if(!v) return ""; const s=String(v).trim().toLowerCase(); return list.find(x=>x.toLowerCase()===s)||""; }
 // XquiX Studio Game Tracker (schema xgt-mark-1) speaks its own terms; translate before matching tiles
-const TRACKER_INFO=new Set(["shot","steal","regular possession","outlet pass"]); // understood, nothing to unmatch
+// Game Tracker term list (schema xgt-mark-1, 24 Oct 2026). Mapped on the stable ids in extra; words as fallback.
+const GT_VARIANT={regular:"Direct",skip:"Skip",lob:"Lob",penalty:"Penalty"};
+const GT_AREA={top_left:"Left High",top_center:"Middle High",top_right:"Right High",middle_left:"Left Middle",middle_center:"Center",middle_right:"Right Middle",low_left:"Left Low",low_center:"Middle Low",low_right:"Right Low"};
+const GT_MISS={high_left:"Over Goal",over:"Over Goal",high_right:"Over Goal",wide_left:"Wide",wide_right:"Wide",post_left:"Post",crossbar:"Post",post_right:"Post",blocked_field:"Blocked before goal"};
+const GT_PASS={lead:"Lead pass",dry:"Dry pass",wet:"Wet pass"};
+const GT_WORDS={
+  stealResult:{gk_has_ball:"goalie has the ball",teammate:"to a teammate",opp_recovered:"opponent recovered",out:"ball out"},
+  blockResult:{gk_in:"goalie keeps it in play",gk_out:"corner throw",fp_in:"field player, in play",fp_out:"goalie ball"},
+  possession:{goalie:"goalie has the ball",rebound_own:"rebound to the defense",rebound_opp:"rebound to the attack"},
+  reboundFollowup:{pass_back:"passed back to the goalie",player_keeps:"player keeps it"},
+  outletFrom:{save:"after a save",block:"after a block",post:"after a post",rebound_pass_back:"after a rebound passed back",steal:"after a steal",goal_throw:"goal throw restart",manual:""}
+};
 function normalizeTrackerMark(m){
-  const x=Object.assign({},m), e=(m.extra&&typeof m.extra==="object")?m.extra:{}, low=v=>String(v||"").trim().toLowerCase();
-  const info=[];
-  // situation: the Tracker names the action; only "Outlet Pass" is also a Game Check situation
-  if(["shot","steal"].includes(low(m.situation))){ info.push(m.situation); x.situation=""; }
-  // shooter position: "Zone 4" -> 4 (field zones 1-6 are the shooting positions)
-  const z=String(m.shooter_position||"").match(/^\s*zone\s*(\d+)\s*$/i);
-  if(z){ const n=+z[1]; x.shooter_position=n>=1&&n<=6?String(n):""; if(!(n>=1&&n<=6)) info.push("Zone "+n); }
-  // shot type
-  const st={regular:"Direct",direct:"Direct",skip:"Skip",lob:"Lob",penalty:"Penalty",rebound:"Rebound","quick finish":"Quick Finish","catch & shoot":"Catch & Shoot","catch and shoot":"Catch & Shoot",turn:"Turn"}[low(m.shot_type)];
-  if(st) x.shot_type=st;
-  // direction: Top/Middle/Bottom + Left/Center/Right -> Game Check grid
-  const dir=low(m.shot_direction||(e.goalPlacement&&e.goalPlacement.label)).replace(/_/g," ");
-  const dm=dir.match(/^(top|high|middle|mid|center|bottom|low)\s+(left|center|centre|middle|right)$/);
-  if(dm){ const row={top:"High",high:"High",middle:"Middle",mid:"Middle",center:"Middle",bottom:"Low",low:"Low"}[dm[1]], col={left:"Left",right:"Right",center:"Middle",centre:"Middle",middle:"Middle"}[dm[2]];
-    x.shot_direction=(row==="Middle"&&col==="Middle")?"Center":(col==="Middle"?"Middle "+row:col+" "+row); }
-  // outcome
-  const oc=low(m.outcome), br=low(e.blockResult);
-  if(oc==="blocked / save"||oc==="blocked"||oc==="save"){ x.outcome=br==="gk_in"?"BLOCK + CONTROL":/rebound/.test(br)?"BLOCK + REBOUND":"BLOCK"; if(br==="gk_in") x._control="Clean catch/control"; }
-  else if(oc==="steal") x.outcome="STEAL";
-  else if(oc==="goal"||oc==="direct goal") x.outcome=low(m.situation)==="outlet pass"?"":"GOAL";
-  if(low(m.situation)==="outlet pass"&&m.outcome){ info.push(m.outcome); if(x.outcome==="") x.outcome=""; else if(!["STEAL"].includes(x.outcome)) x.outcome=""; }
-  // outlet pass type -> specific detail tile
-  const pt=e.outlet&&low(e.outlet.passTypeLabel||e.outlet.passType);
-  x._spec=pt?({"lead pass":"Lead pass",lead:"Lead pass","wet pass":"Wet pass",wet:"Wet pass","dry pass":"Dry pass",dry:"Dry pass","long pass":"Long pass",long:"Long pass","short pass":"Short pass",short:"Short pass"}[pt]||""):"";
-  if(pt&&!x._spec) info.push(e.outlet.passTypeLabel||e.outlet.passType);
+  const e=(m.extra&&typeof m.extra==="object")?m.extra:{}, low=v=>String(v==null?"":v).trim().toLowerCase();
+  const x=Object.assign({},m,{situation:"",shooter_position:"",shot_type:"",shot_direction:"",outcome:""});
+  const info=[], w=(map,k)=>k&&GT_WORDS[map][k];
+  const action=low(e.action)||({shot:"shot",steal:"steal","personal foul":"exclusion",turnover:"turnover","outlet pass":"outlet_pass"}[low(m.situation)]||"");
+  const oc=low(e.outcome)||low(m.outcome);
+  // where the shot came from: Tracker field zones 1-6 = Game Check positions 1-6
+  const z=String(m.shooter_position||"").match(/zone\s*(\d+)/i);
+  if(z){ const n=+z[1]; if(n>=1&&n<=6) x.shooter_position=String(n); else info.push("from zone "+n); }
+  if(action==="shot"){
+    const v=low(e.variant)||low(m.shot_type).replace(/ shot$/,"").replace(/ \(5 m\)$/,"");
+    if(GT_VARIANT[v]) x.shot_type=GT_VARIANT[v];
+    if(v==="penalty") x.situation="Penalty";
+    const gp=e.goalPlacement||{}, area=low(gp.area)||low(m.shot_direction).replace(/ /g,"_");
+    if(GT_AREA[area]) x.shot_direction=GT_AREA[area];
+    else if(GT_MISS[area]) x.shot_extra=GT_MISS[area];
+    else if(area==="short") info.push("short, into the water");
+    if(oc==="goal") x.outcome="GOAL";
+    else if(oc==="missed"||oc==="missed shot") x.outcome=(GT_MISS[area]==="Post")?"POST":"MISS";
+    else if(oc==="def_block"||oc==="defender block") x.outcome="DEFENDER BLOCK";
+    else if(oc==="blocked"||oc==="blocked / save"||oc==="blocked shot"){
+      const br=low(e.blockResult), po=low(e.possession);
+      if(po==="rebound_own"||po==="rebound_opp") x.outcome="BLOCK + REBOUND";
+      else if(br==="gk_in"||po==="goalie"){ x.outcome="BLOCK + CONTROL"; x._control="Clean catch/control"; }
+      else x.outcome="BLOCK";
+      if(w("blockResult",br)&&br!=="gk_in") info.push(w("blockResult",br));
+      if(w("possession",po)&&po!=="goalie") info.push(w("possession",po));
+    }
+    const rf=low(e.reboundFollowup); if(w("reboundFollowup",rf)) info.push(w("reboundFollowup",rf));
+  }
+  else if(action==="steal"){ x.outcome="STEAL"; const sr=low(e.stealResult); if(w("stealResult",sr)) info.push("Steal, "+w("stealResult",sr)); }
+  else if(action==="outlet_pass"||action==="outlet"){
+    x.situation="Outlet Pass";
+    const o=e.outlet||{}, pt=low(o.passType)||low(o.passTypeLabel).replace(/ pass$/,"");
+    x._spec=GT_PASS[pt]||""; if(!x._spec&&(o.passTypeLabel||o.passType)) info.push(o.passTypeLabel||o.passType);
+    if(m.outcome||o.outcomeLabel) info.push("Outlet: "+(o.outcomeLabel||m.outcome));
+    const fr=low(o.from); if(w("outletFrom",fr)) info.push(w("outletFrom",fr));
+    if(o.receivedZone!=null&&o.receivedZone!=="") info.push(String(o.receivedZone).toUpperCase()==="OPPO"?"caught in the opponent’s half":"caught in zone "+o.receivedZone);
+  }
+  else if(action==="exclusion"){ x.outcome="OTHER"; info.push("Personal foul"+(m.outcome?": "+m.outcome:"")); }
+  else if(action==="turnover"){ x.outcome="OTHER"; info.push("Turnover"+(m.outcome?": "+m.outcome:"")); }
+  else { // unknown action: keep the words visible
+    if(m.situation) info.push(m.situation); if(m.outcome) info.push(m.outcome);
+  }
   x._info=info;
   return x;
 }
@@ -1477,6 +1506,7 @@ function markToDraft(m0,g,c){
     const gv=pickVocab(grid,s); if(gv) d.shot_direction=gv; else if(ex) d.shot_extra=ex; else un.push("direction “"+s+"”"); }
   const out=pickVocab(OUTCOMES,m.outcome); if(out) d.outcome=out; else if(m.outcome) un.push("outcome “"+m.outcome+"”");
   if(m._control&&d.outcome==="BLOCK + CONTROL") d.outcome_detail=m._control;
+  if(m.shot_extra&&!d.shot_extra) d.shot_extra=m.shot_extra;
   if(m._spec&&d.situation_primary) d.specific=[m._spec];
   // video time: from the Tracker, or from this game's sync point
   let ts=null, how="";
