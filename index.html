@@ -353,54 +353,13 @@ function errKind(err){
   return "error";
 }
 function markDirty(key){ dirty.add(key); clearTimeout(syncTimer); syncTimer=setTimeout(flush,900); }
-async function flush(){
-  if(!sb||!USER||!dirty.size) return;
-  const keys=[...dirty]; dirty.clear(); setSync("syncing");
-  const rows=keys.map(k=>{
-    if(k==="prefs") return {owner:USER.id,id:"prefs",kind:"prefs",data:S.prefs,deleted:false,updated_at:toTs(S.prefs.updated_at)};
-    const c=S.checks[k]; if(!c) return null;
-    return {owner:USER.id,id:k,kind:"check",data:c,deleted:!!c.deleted,updated_at:toTs(c.updated_at)};
-  }).filter(Boolean);
-  if(!rows.length){ setSync(CLOUD==="ok"?"synced":"device"); return; }
-  try{
-    const {error}=await sb.from("gc_documents").upsert(rows,{onConflict:"owner,id"});
-    if(error){ keys.forEach(k=>dirty.add(k)); CLOUD=errKind(error)||"error"; setSync("device"); return; }
-    CLOUD="ok"; setSync(dirty.size?"syncing":"synced");
-  }catch(e){ keys.forEach(k=>dirty.add(k)); CLOUD="offline"; setSync("device"); }
-}
+async function flush(){ dirty.clear(); setSync("device"); } // XquiX Studio stores nothing of Game Check: data lives on this device
 function toTs(v){ return v&&v!=="1970"?v:new Date(0).toISOString(); }
 function setSync(s){ syncState=s; document.querySelectorAll("#sync").forEach(el=>el.textContent=syncLabel()); }
-function syncLabel(){
-  if(syncState==="syncing") return "Saving…";
-  if(CLOUD==="ok") return "Saved · synced";
-  if(CLOUD==="setup") return "Saved on this device · cloud not set up yet";
-  if(CLOUD==="denied") return "Saved on this device · no Game Check access";
-  if(CLOUD==="offline"||!navigator.onLine) return "Saved on this device · offline";
-  return "Saved on this device";
-}
+function syncLabel(){ return "Saved on this device"; }
 document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden") flush(); });
 window.addEventListener("online",()=>{ pull(); loadMarks(); });
-async function pull(){
-  if(!sb||!USER||pulling) return; pulling=true;
-  try{
-    await flush();
-    const {data,error}=await sb.from("gc_documents").select("id,kind,data,deleted,updated_at");
-    if(error){ CLOUD=errKind(error)||"error"; setSync("device"); return; }
-    let changed=false; const remoteIds=new Set();
-    (data||[]).forEach(r=>{
-      const obj=r.data; if(!obj||typeof obj!=="object") return;
-      if(r.id==="prefs"){ remoteIds.add("prefs"); if((obj.updated_at||"")>(S.prefs.updated_at||"")){ S.prefs={...S.prefs,...obj,settings:{...DEFAULT_SETTINGS,...(obj.settings||{})}}; changed=true; } else if((obj.updated_at||"")<(S.prefs.updated_at||"")) markDirty("prefs"); return; }
-      remoteIds.add(r.id); const loc=S.checks[r.id];
-      if(!loc||(obj.updated_at||"")>(loc.updated_at||"")){ S.checks[r.id]=obj; changed=true; }
-      else if((obj.updated_at||"")<(loc.updated_at||"")) markDirty(r.id);
-    });
-    Object.keys(S.checks).forEach(cid=>{ if(!remoteIds.has(cid)) markDirty(cid); });
-    if(!remoteIds.has("prefs")){ if(S.prefs.updated_at==="1970") S.prefs.updated_at=now(); markDirty("prefs"); }
-    CLOUD="ok"; setSync(dirty.size?"syncing":"synced");
-    if(changed){ saveLocal(); if(P) P.refresh(); else if(!W&&!$("#layer .sheet")) render(); }
-  }catch(e){ CLOUD="offline"; setSync("device"); }
-  finally{ pulling=false; }
-}
+async function pull(){} // no Game Check documents in XquiX Studio
 document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"){ pull(); loadMarks(); } });
 setInterval(()=>{ if(document.visibilityState==="visible"&&USER){ pull(); if(MARKS_STATE!=="live") loadMarks(); } },30000);
 
@@ -1057,12 +1016,12 @@ function settingsView(){
    <div class="sect">Custom categories</div>
    <div class="chips">${(S.prefs.cats||[]).map(p=>`<button class="chip" data-delcat="${esc(p)}">${esc(p)} ✕</button>`).join("")}<button class="chip fav" data-act="addCat">+ Add category</button></div>
    <div class="sect">Account & sync</div>
-   <div class="cloud"><span class="dot ${CLOUD==="ok"?"ok":CLOUD==="denied"?"bad":"warn"}"></span><div style="min-width:0"><b>${esc(USER&&USER.email||"")}</b><div class="note">${esc(syncLabel())}. ${CLOUD==="ok"?"Your Game Checks are stored in XquiX Studio’s database under this account, so phone and Mac show the same data.":CLOUD==="setup"?"XquiX Studio hasn’t created Game Check’s tables yet. Everything is kept on this device and uploads automatically once they exist.":CLOUD==="denied"?"This account doesn’t have the Game Check permission yet. Everything is kept on this device until it does.":"Everything is kept on this device and uploads when the connection is back."}</div></div></div>
+   <div class="cloud"><span class="dot ok"></span><div style="min-width:0"><b>${esc(USER&&USER.email||"")}</b><div class="note">Your Game Checks are saved on this device only. XquiX Studio stores nothing of Game Check; the sign-in is only used for the Game Tracker inbox. Save a backup regularly.</div></div></div>
    <div class="cloud"><span class="dot ${MARKS_STATE==="live"||MARKS_STATE==="ok"?"ok":"warn"}"></span><div><b>Game Tracker inbox</b><div class="note">${MARKS_STATE==="live"?"Connected live.":MARKS_STATE==="ok"?"Connected, checking every 30 seconds.":MARKS_STATE==="setup"?"Waiting for XquiX Studio to set up marked scenes.":"Not connected right now."}</div></div></div>
    <div class="sect">Data</div>
    <button class="btn ghost block" data-act="backup">Save a backup (.json)</button>
    <label class="btn ghost block" for="imp_file" style="margin-top:10px;cursor:pointer">Import a backup (.json)</label><input id="imp_file" type="file" accept=".json,application/json" hidden>
-   <p class="note">Use Import once to bring over the Game Checks from the earlier claude.ai version: there, open Settings → Download a backup, then import that file here. Nothing is overwritten that is newer here.</p>
+   <p class="note">To move Game Checks to another device (for example from the iPhone to the Mac for a presentation), save a backup on one and import it on the other. Import also brings over the Game Checks from the earlier claude.ai version. Nothing newer on this device is overwritten.</p>
    <button class="btn ghost block" data-act="signout" style="margin-top:14px;color:var(--danger)">Sign out</button>
   </main>`;
 }
@@ -1082,7 +1041,7 @@ function bindSettings(){
     if(k==="addSit") textAsk("Add situation","e.g. 6 vs 5 counter",v=>{ S.prefs.situations=(S.prefs.situations||[]).concat([v]); touchPrefs(); render(); });
     if(k==="addCat") textAsk("Add category","e.g. Penalty Preparation",v=>{ S.prefs.cats=(S.prefs.cats||[]).concat([v]); touchPrefs(); render(); });
     if(k==="backup"){ const r=await deliverFile("Game Video Check backup "+new Date().toISOString().slice(0,10)+".json",new Blob([JSON.stringify({checks:S.checks,prefs:S.prefs},null,1)],{type:"application/json"})); if(r==="needs-tap") toast("Tap Save a backup again"); }
-    if(k==="signout"){ const n=dirty.size; confirmBox("Sign out?",(n?"Some changes haven’t reached the cloud yet and will be lost. ":"")+"Game Checks are removed from this device and stay in your account.","Sign out",async()=>{ try{ await sb.auth.signOut(); }catch(e){} try{ localStorage.removeItem(STORE_KEY); localStorage.removeItem(STORE_KEY+"_ui"); localStorage.removeItem(STORE_KEY+"_owner"); }catch(e){} location.reload(); }); }
+    if(k==="signout"){ const n=dirty.size; confirmBox("Sign out?","Game Checks on this device are deleted. Save a backup first if you want to keep them.","Sign out",async()=>{ try{ await sb.auth.signOut(); }catch(e){} try{ localStorage.removeItem(STORE_KEY); localStorage.removeItem(STORE_KEY+"_ui"); localStorage.removeItem(STORE_KEY+"_owner"); }catch(e){} location.reload(); }); }
   };
 }
 
