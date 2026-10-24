@@ -1473,7 +1473,7 @@ function authView(){
     <form id="authform" class="stack" novalidate>
       <div><label class="f" for="au_email">Email</label><input id="au_email" type="email" autocomplete="username" inputmode="email" value="${esc(UI.authEmail||"")}" ${sent?"readonly":""} required></div>
       ${mode==="pw"?`<div><label class="f" for="au_pw">Password</label><input id="au_pw" type="password" autocomplete="current-password" required></div>`:""}
-      ${sent?`<div><label class="f" for="au_code">Code from the email (if it has one)</label><input id="au_code" inputmode="numeric" autocomplete="one-time-code" maxlength="10" style="font-size:24px;letter-spacing:.3em;text-align:center" required></div>`:""}
+      ${sent?`<div><label class="f" for="au_code">6-digit code from the email</label><input id="au_code" inputmode="numeric" autocomplete="one-time-code" maxlength="10" style="font-size:24px;letter-spacing:.3em;text-align:center" required></div>`:""}
       <button class="btn primary block" type="submit" id="au_go">${mode==="pw"?"Sign in":sent?"Sign in":"Email me a code"}</button>
     </form>
     <div class="row" style="justify-content:space-between">
@@ -1508,7 +1508,7 @@ function bindAuth(){
     try{
       if(mode==="pw"){ const pw=$("#au_pw").value; if(!pw) return say("Enter your password.",true);
         const {error}=await sb.auth.signInWithPassword({email,password:pw}); if(error) return say("That email and password don’t match. Sign in with an email code instead.",true); AUTH_MSG=null; UI.codeSent=false; return; }
-      if(!UI.codeSent){ if(await sendCode(email)){ UI.codeSent=true; AUTH_MSG={text:"Check your email. If it shows a code, enter it below. If it only has a sign-in link, open that link on this device."}; } render(); return; }
+      if(!UI.codeSent){ if(await sendCode(email)){ UI.codeSent=true; AUTH_MSG={text:"We emailed you a 6-digit code. Enter it below."}; } render(); return; }
       const token=($("#au_code").value||"").replace(/\s/g,""); if(!token) return say("Enter the code from the email.",true);
       const {error}=await sb.auth.verifyOtp({email,token,type:"email"});
       if(error) return say("That code isn’t right or has expired. Check the latest email, or send a new code.",true);
