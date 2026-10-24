@@ -368,8 +368,16 @@ setInterval(()=>{ if(document.visibilityState==="visible"&&USER){ pull(); if(MAR
 
 // ---- Inbox: scenes marked in the XquiX Studio Game Tracker ----
 let MARKS=[], marksChannel=null;
+let GC_ACCESS=null; // true/false from public.is_game_check_user(); null = not known yet
+async function checkAccess(){
+  if(!sb||!USER) return null;
+  try{ const {data,error}=await sb.rpc("is_game_check_user"); if(!error) GC_ACCESS=data===true; }catch(e){}
+  return GC_ACCESS;
+}
 async function loadMarks(){
   if(!sb||!USER) return;
+  if(GC_ACCESS===null) await checkAccess();
+  if(GC_ACCESS===false){ MARKS_STATE="denied"; MARKS=[]; updateInbox(); return; }
   try{
     const {data,error}=await sb.from("gc_scene_marks").select("*").eq("status","new").order("created_at",{ascending:true}).limit(300);
     if(error){ const k=errKind(error); MARKS_STATE=k==="setup"?"setup":k==="offline"?"offline":"error"; MARKS=[]; updateInbox(); return; }
@@ -405,7 +413,7 @@ async function initAuth(){
     if(ev==="PASSWORD_RECOVERY"){ USER=session&&session.user||USER; UI.view="setpw"; render(); return; }
     const u=session&&session.user||null; const changedUser=(u&&u.id)!==(USER&&USER.id);
     USER=u; if(USER) setGuest(false);
-    if(changedUser){ if(USER){ adoptLocalFor(USER.id); pull(); loadMarks(); subscribeMarks(); } if(AUTH_READY) render(); }
+    if(changedUser){ GC_ACCESS=null; if(USER){ adoptLocalFor(USER.id); pull(); loadMarks(); subscribeMarks(); } if(AUTH_READY) render(); }
   });
   try{ const {data}=await sb.auth.getSession(); USER=data&&data.session&&data.session.user||null; }catch(e){}
   AUTH_READY=true;
@@ -1025,7 +1033,7 @@ function settingsView(){
    <div class="chips">${(S.prefs.cats||[]).map(p=>`<button class="chip" data-delcat="${esc(p)}">${esc(p)} ✕</button>`).join("")}<button class="chip fav" data-act="addCat">+ Add category</button></div>
    <div class="sect">Account & sync</div>
    <div class="cloud"><span class="dot ok"></span><div style="min-width:0"><b>${USER?esc(USER.email):"Not signed in"}</b><div class="note">Your Game Checks are saved on this device only. XquiX Studio stores nothing of Game Check; the sign-in is only used for the Game Tracker inbox. Save a backup regularly.</div></div></div>
-   <div class="cloud"><span class="dot ${MARKS_STATE==="live"||MARKS_STATE==="ok"?"ok":"warn"}"></span><div><b>Game Tracker inbox</b><div class="note">${MARKS_STATE==="live"?"Connected live.":MARKS_STATE==="ok"?"Connected, checking every 30 seconds.":MARKS_STATE==="setup"?"Waiting for XquiX Studio to set up marked scenes.":"Not connected right now."}</div></div></div>
+   <div class="cloud"><span class="dot ${MARKS_STATE==="live"||MARKS_STATE==="ok"?"ok":MARKS_STATE==="denied"?"bad":"warn"}"></span><div><b>Game Tracker inbox</b><div class="note">${!USER?"Sign in to connect.":MARKS_STATE==="denied"?"This account doesn’t have XquiX Studio’s Game Check permission.":MARKS_STATE==="live"?"Connected live.":MARKS_STATE==="ok"?"Connected, checking every 30 seconds.":MARKS_STATE==="setup"?"Waiting for XquiX Studio to set up marked scenes.":"Not connected right now."}</div></div></div>
    <div class="sect">Data</div>
    <button class="btn ghost block" data-act="backup">Save a backup (.json)</button>
    <label class="btn ghost block" for="imp_file" style="margin-top:10px;cursor:pointer">Import a backup (.json)</label><input id="imp_file" type="file" accept=".json,application/json" hidden>
@@ -1364,6 +1372,7 @@ function drawInbox(){
   if(!USER) body=`<div class="empty"><div class="big">Sign in to see marks</div><p>The inbox shows scenes you mark in the XquiX Studio Game Tracker. It needs your Game Check account.</p><button class="btn primary" data-mk="signin">Sign in</button></div>`;
   else if(MARKS_STATE==="setup") body=`<div class="empty"><div class="big">Waiting for XquiX Studio</div><p>The inbox connects once XquiX Studio has set up the marked-scenes table. Everything else in Game Check already works.</p></div>`;
   else if(MARKS_STATE==="offline") body=`<div class="empty"><div class="big">Offline</div><p>Marked scenes appear here when you’re back online.</p></div>`;
+  else if(MARKS_STATE==="denied") body=`<div class="empty"><div class="big">No Game Check permission</div><p>This account (${esc(USER.email)}) doesn’t carry XquiX Studio’s Game Check flag, so it can’t see marks. Sign in with your Game Check account, or ask XquiX Studio to set the flag.</p></div>`;
   else if(MARKS_STATE==="error") body=`<div class="empty"><div class="big">Inbox not reachable</div><p>Try again in a moment. If it keeps happening, the Game Check account may not have access to marked scenes yet.</p></div>`;
   else if(!MARKS.length) body=`<div class="empty"><div class="big">No new marks</div><p>Tap <b>Mark for Game Check</b> on an event in the XquiX Studio Game Tracker. It appears here within seconds.</p></div>`;
   else {
@@ -1371,13 +1380,13 @@ function drawInbox(){
     body=Object.values(groups).map(list=>{ const g=list[0];
       return `<div class="gamehead"><h3>${esc(g.game_label||[g.team,g.opponent].filter(Boolean).join(" vs. ")||"Game")}</h3><span class="muted" style="font-size:14px">${g.game_date?esc(fmtDate(g.game_date))+" · ":""}${list.length}</span></div>
       <div class="stack" style="gap:8px">${list.map(m=>`<div class="markcard"><div class="row" style="justify-content:space-between;flex-wrap:nowrap"><div class="when">${esc(markWhen(m))}</div>${m.goalie_name?`<span class="pill prog">${esc(m.goalie_name)}</span>`:""}</div>
-        <div class="what">${esc(markWhat(m))}</div>${m.note?`<div class="meta">“${esc(m.note)}”</div>`:""}
+        <div class="what">${esc(markWhat(m))}</div>${m.note?`<div class="meta">“${esc(m.note)}”</div>`:""}${(()=>{ const left=14-Math.floor((Date.now()-new Date(m.created_at))/86400000); return left<=3?`<div class="meta" style="color:var(--danger)">Removed from the inbox ${left<=1?"within a day":"in "+left+" days"} if not used</div>`:""; })()}
         <div class="grid2"><button class="btn ghost sm" data-mk="dismiss" data-id="${esc(m.id)}">Dismiss</button><button class="btn primary sm" data-mk="use" data-id="${esc(m.id)}">Create scene</button></div></div>`).join("")}</div>`; }).join("");
   }
   const where=UI.view==="check"&&CK()?`Scenes go into <b>${esc(CK().athlete_name)}</b>’s Game Check.`:`You choose the Game Check when you create a scene.`;
   sh.innerHTML=`<div class="shead gutter"><div class="row"><button class="iconbtn" data-mk="close" aria-label="Close inbox">${IC.close}</button>
     <div style="flex:1;min-width:0"><div class="eyebrow">From the Game Tracker</div><div class="athlete" style="font-size:20px">Inbox${MARKS.length?" · "+MARKS.length:""}</div></div></div>
-    <div class="summary">${MARKS.length?where:"Marks you set in the XquiX Studio Game Tracker."}</div></div>
+    <div class="summary">${MARKS.length?where+" ":""}Used and dismissed marks are deleted from XquiX Studio overnight; unused marks after 14 days.</div></div>
     <div class="sbody2 gutter"><div>${body}</div></div>`;
 }
 async function inboxClick(e){
@@ -1389,7 +1398,7 @@ async function inboxClick(e){
     MARKS=MARKS.filter(x=>x!==m); updateInbox();
     const ok=await setMarkStatus(m.id,"dismissed");
     if(!ok){ MARKS.push(m); updateInbox(); toast("Couldn’t dismiss. Check the connection."); return; }
-    toast("Mark dismissed",async()=>{ if(await setMarkStatus(m.id,"new")) loadMarks(); });
+    toast("Mark dismissed",async()=>{ if(await setMarkStatus(m.id,"new")) loadMarks(); else toast("That mark is already gone"); });
   }
   if(k==="use") useMark(m);
 }
