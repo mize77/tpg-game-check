@@ -560,7 +560,7 @@ function homeView(){
   `<main class="gutter stack" style="padding-bottom:40px">
     <div class="sync" id="sync" style="color:var(--muted);text-align:right">${syncLabel()}</div>
     <button class="btn primary block" data-act="new" style="min-height:64px;font-size:22px">+ New Game Video Check</button>
-    <button class="btn ghost block" data-act="openfile">Open a Game Check file${IS_TOUCH?"":" (or drop it on this window)"}</button><input id="gc_file" type="file" accept=".json,application/json" hidden>
+    <button class="btn ghost block" data-act="openfile">Open a Game Check file${IS_TOUCH?"":" (or drop it on this window)"}</button><input id="gc_file" type="file" hidden>
     <div class="sect">Open existing · ${list.length}</div>
     ${list.length?list.map(c=>`<div class="card"><button class="checkitem" data-open="${c.id}">
       <div style="flex:1;min-width:0"><div style="font-family:var(--display);font-weight:800;font-size:22px;text-transform:uppercase">${esc(c.athlete_name)}${c.nickname?` <span class="muted" style="font-size:16px">“${esc(c.nickname)}”</span>`:""}</div>
@@ -806,7 +806,7 @@ function openWizard(c,sid,opt={}){
     draft=emptyScene(UI.gameId); const l=lastScene(c);
     const lg=c.scenes.filter(s=>s.game_id===UI.gameId).sort((a,b)=>b.timestamp-a.timestamp)[0];
   }
-  W={c,draft,isNew:!sid,step:0,fresh:true,question:!!opt.question,openGroups:{}};
+  W={c,draft,isNew:!sid,step:0,fresh:true,question:!!opt.question,openGroups:{},digits:null,badSec:false};
   if(opt.question){ W.steps=null; }
   computeSteps(); if(opt.question) W.qmode=true;
   renderWizard();
@@ -846,8 +846,8 @@ function tiles(list,sel,attr,cls=""){ return list.map(v=>`<button class="tl ${cl
 function stepHtml(step){
   const d=W.draft, c=W.c;
   if(step==="time"){
-    const has=d.timestamp!=null, m=has?Math.floor(d.timestamp/60):0, s=has?d.timestamp%60:0;
-    return markBanner(d)+`<div class="tsbig" aria-live="polite">${has?`${m}<span class="c">:</span>${String(s).padStart(2,"0")}`:`<span class="muted">–<span class="c">:</span>––</span>`}</div>
+    const dg=W.digits!=null?W.digits:tsDigits(d.timestamp), has=!!dg, dv=has?parseInt(dg,10):0, m=Math.floor(dv/100), s=dv%100;
+    return markBanner(d)+`<div class="tsbig" aria-live="polite" style="${W.badSec?"color:var(--danger)":""}">${has?`${m}<span class="c">:</span>${String(s).padStart(2,"0")}`:`<span class="muted">–<span class="c">:</span>––</span>`}</div>
      <div class="adj"><button class="btn ghost sm" data-adj="-60">−1 min</button><button class="btn ghost sm" data-adj="-10">−10 s</button><button class="btn ghost sm" data-adj="10">+10 s</button><button class="btn ghost sm" data-adj="60">+1 min</button></div>
      <div class="keypad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-key="${n}">${n}</button>`).join("")}<button class="fn" data-key="clr">Clear</button><button data-key="0">0</button><button class="fn" data-key="del">⌫</button></div>
      ${c.games.length>1?`<div class="sect" style="text-align:center">Game</div><div class="tiles">${c.games.map((g,i)=>`<button class="tl ${g.id===d.game_id?"on":""}" data-wgame="${g.id}">G${i+1} · ${esc(gameLabel(g,true))}</button>`).join("")}</div>`:""}
@@ -924,9 +924,12 @@ function stepHtml(step){
   return "";
 }
 const tsDigits=t=>t==null?"":(String(Math.floor(t/60))+String(t%60).padStart(2,"0")).replace(/^0+/,"");
-function typeDigit(n){ const d=W.draft; let digits=W.fresh?"":tsDigits(d.timestamp); W.fresh=false; digits=(digits+n).slice(-4); const v=parseInt(digits||"0"); let m=Math.floor(v/100), s=v%100; d.timestamp=m*60+s; W.rawSec=s; renderWizard(); }
-function typeDel(){ const d=W.draft; W.fresh=false; let digits=tsDigits(d.timestamp).slice(0,-1); if(!digits){ d.timestamp=null; renderWizard(); return; } const v=parseInt(digits); d.timestamp=Math.floor(v/100)*60+v%100; renderWizard(); }
+// the keypad keeps the digits as typed (M MSS); minutes:seconds are only read from them, never re-normalized mid-entry
+function setDigits(dg){ const d=W.draft; W.digits=dg; if(!dg){ d.timestamp=null; W.badSec=false; return; } const v=parseInt(dg,10), m=Math.floor(v/100), sec=v%100; W.badSec=sec>59; d.timestamp=m*60+Math.min(sec,59); }
+function typeDigit(n){ let dg=W.fresh?"":(W.digits!=null?W.digits:tsDigits(W.draft.timestamp)); W.fresh=false; dg=(dg+n).replace(/^0+/,"").slice(-4); setDigits(dg); renderWizard(); }
+function typeDel(){ let dg=W.fresh?"":(W.digits!=null?W.digits:tsDigits(W.draft.timestamp)); W.fresh=false; setDigits(dg.slice(0,-1)); renderWizard(); }
 function wizNext(){
+  if(W.steps[W.step]==="time"&&W.badSec){ toast("Seconds go from 00 to 59"); return; }
   if(W.steps[W.step]==="time" && W.qmode){ W.step=W.steps.indexOf("feedback"); renderWizard(); setTimeout(()=>{ const el=$("#w_question_text"); el&&el.scrollIntoView({block:"center"}); },30); return; }
   if(W.step<W.steps.length-1){ W.step++; renderWizard(); $("#wbody").scrollTop=0; }
 }
@@ -951,10 +954,11 @@ function wizSave(andNew){
   if(mk){
     const g=c.games.find(x=>x.id===d.game_id);
     // first imported mark of a game sets its sync point; a corrected time re-syncs it
-    if(g&&mk.occurred_at&&mk.how!=="tracker"&&(!g.sync||d.timestamp!==mk.computed)) g.sync={at:mk.occurred_at,video_sec:d.timestamp};
+    if(g&&mk.occurred_at&&mk.how!=="tracker") g.sync={at:mk.occurred_at,video_sec:d.timestamp}; // latest typed time is the anchor for the next estimate
     MARKS=MARKS.filter(x=>x.id!==mk.id); updateInbox();
     setMarkStatus(mk.id,"imported",c.id+"/"+d.id);
   }
+  if(W.badSec){ W.step=0; renderWizard(); toast("Seconds go from 00 to 59"); return; }
   ensureCategory(d);
   const sg=suggestText(d); if(!d.observation_text.trim()&&sg.observation) d.observation_text=sg.observation; if(!d.focus_text.trim()&&sg.focus) d.focus_text=sg.focus;
   if(!d.facts_edited) d.facts_text="";
@@ -970,8 +974,8 @@ function wizSave(andNew){
 function wizClick(e){
   const d=W.draft, t=e.target;
   const go=t.closest("[data-go]"); if(go){ W.step=+go.dataset.go; renderWizard(); return; }
-  const key=t.closest("[data-key]"); if(key){ const k=key.dataset.key; if(k==="del") typeDel(); else if(k==="clr"){ d.timestamp=null; W.fresh=false; renderWizard(); } else typeDigit(+k); return; }
-  const adj=t.closest("[data-adj]"); if(adj){ d.timestamp=Math.max(0,(d.timestamp||0)+(+adj.dataset.adj)); W.fresh=true; renderWizard(); return; }
+  const key=t.closest("[data-key]"); if(key){ const k=key.dataset.key; if(k==="del") typeDel(); else if(k==="clr"){ setDigits(""); W.fresh=false; renderWizard(); } else typeDigit(+k); return; }
+  const adj=t.closest("[data-adj]"); if(adj){ d.timestamp=Math.max(0,(d.timestamp||0)+(+adj.dataset.adj)); W.digits=tsDigits(d.timestamp); W.badSec=false; W.fresh=true; renderWizard(); return; }
   const wg=t.closest("[data-wgame]"); if(wg){ d.game_id=wg.dataset.wgame; renderWizard(); return; }
   const sit=t.closest("[data-sit]"); if(sit){ toggleSit(sit.dataset.sit); buzz(); renderWizard(); return; }
   const sp=t.closest("[data-spec]"); if(sp){ const v=sp.dataset.spec; d.specific=d.specific.includes(v)?d.specific.filter(x=>x!==v):d.specific.concat([v]); buzz(); renderWizard(); return; }
@@ -992,6 +996,7 @@ function wizClick(e){
   const w=t.closest("[data-w]"); if(!w) return;
   const k=w.dataset.w;
   if(k==="close"){ closeWizard(); return; }
+  if(k==="usesugg"&&d._mark&&d._mark.suggest!=null){ d.timestamp=d._mark.suggest; W.digits=tsDigits(d.timestamp); W.badSec=false; W.fresh=true; renderWizard(); return; }
   if(k==="back"){ if(W.step>0){ W.step--; renderWizard(); } return; }
   if(k==="next"){ wizNext(); return; }
   if(k==="save"){ wizSave(false); return; }
@@ -1511,16 +1516,17 @@ function markToDraft(m0,g,c){
   // video time: from the Tracker, or from this game's sync point
   let ts=null, how="";
   if(m.video_time_sec!=null){ ts=Math.max(0,Math.round(m.video_time_sec)); how="tracker"; }
-  else if(g.sync&&g.sync.at&&m.occurred_at){ ts=Math.max(0,Math.round(g.sync.video_sec+(new Date(m.occurred_at)-new Date(g.sync.at))/1000)); how="sync"; }
+  let sugg=null;
+  if(ts==null&&g.sync&&g.sync.at&&m.occurred_at){ sugg=Math.max(0,Math.round(g.sync.video_sec+(new Date(m.occurred_at)-new Date(g.sync.at))/1000)); how="sync"; }
   d.timestamp=ts; d.mark_id=m.id;
-  d._mark={id:m.id,occurred_at:m.occurred_at||null,when:markWhen(m0),note:m.note||"",unmapped:un,info:m._info||[],how,computed:ts};
+  d._mark={id:m.id,occurred_at:m.occurred_at||null,when:markWhen(m0),note:m.note||"",unmapped:un,info:m._info||[],how,computed:ts,suggest:sugg};
   return d;
 }
 function markBanner(d){
   const k=d._mark; if(!k) return "";
   const time=k.how==="tracker"?"Video time from the Tracker."
-    :k.how==="sync"?"Video time calculated from this game’s sync point. Check it against the video; a correction re-syncs the game."
-    :k.occurred_at?"Type the video time of this moment. It becomes this game’s sync point, and later marks get their time calculated.":"Type the video time of this moment.";
+    :k.how==="sync"?`Type the video time of this moment. Estimate from your last mark: <b>${fmtTs(k.suggest)}</b> <button class="btn ghost sm" data-w="usesugg" style="min-height:30px;margin-left:4px">Use</button> (only reliable when tracking live without pauses).`
+    :"Type the video time of this moment.";
   return `<div class="markinfo"><b>From the Game Tracker · ${esc(k.when)}</b><br>${time}${k.info&&k.info.length?`<br>Tracker: ${esc(k.info.join(" · "))}`:""}${k.note?`<br>Your note: “${esc(k.note)}”`:""}${k.unmapped.length?`<br>Not matched to a tile: ${esc(k.unmapped.join(", "))}.`:""}</div>`;
 }
 

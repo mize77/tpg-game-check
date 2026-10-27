@@ -1,5 +1,5 @@
 // Game Check service worker: app shell offline; libraries cached once, the app file refreshed on update.
-const APP="gc-app-b20776baaa", LIB="gc-lib-1";
+const APP="gc-app-0d36c79b52", LIB="gc-lib-1";
 const LIBS=["vendor/supabase.js","vendor/591.supabase.js","vendor/jspdf.umd.min.js","vendor/pdf.min.js","vendor/pdf.worker.min.js","icons/logo.png","icons/apple-touch-icon.png","icons/icon-192.png","icons/icon-512.png","icons/favicon-32.png"];
 self.addEventListener("install",e=>{ e.waitUntil(Promise.all([
   caches.open(APP).then(c=>c.addAll(["./","manifest.webmanifest"])),
