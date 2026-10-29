@@ -1452,6 +1452,11 @@ const GT_WORDS={
   reboundFollowup:{pass_back:"passed back to the goalie",player_keeps:"player keeps it"},
   outletFrom:{save:"after a save",block:"after a block",post:"after a post",rebound_pass_back:"after a rebound passed back",steal:"after a steal",goal_throw:"goal throw restart",manual:""}
 };
+// How a mark says it uses the new US zone numbering (any one is enough); set by XquiX Studio.
+function trackerUsesUSZones(m,e){ const sc=String(e.schema||m.schema||""); const v=parseInt((sc.match(/xgt-mark-(\d+)/)||[])[1]||"1",10);
+  return v>=2||String(e.zoneNumbering||"").toLowerCase()==="us"||e.zoneNumbering===2; }
+// Old Tracker zone -> Game Check position. Empty until XquiX Studio sends the old-to-new table.
+const OLD_ZONE_TO_POSITION={};
 function normalizeTrackerMark(m){
   const e=(m.extra&&typeof m.extra==="object")?m.extra:{}, low=v=>String(v==null?"":v).trim().toLowerCase();
   const x=Object.assign({},m,{situation:"",shooter_position:"",shot_type:"",shot_direction:"",outcome:""});
@@ -1459,8 +1464,13 @@ function normalizeTrackerMark(m){
   const action=low(e.action)||({shot:"shot",steal:"steal","personal foul":"exclusion",turnover:"turnover","outlet pass":"outlet_pass"}[low(m.situation)]||"");
   const oc=low(e.outcome)||low(m.outcome);
   // where the shot came from: Tracker field zones 1-6 = Game Check positions 1-6
+  // Zones: from the Tracker release with US numbering, zones 1 (right) to 5 (left) and 6 (in front) ARE positions 1-6.
+  // Marks in the older numbering keep their zone as a note until the old-to-new table is known.
   const z=String(m.shooter_position||"").match(/zone\s*(\d+)/i);
-  if(z){ const n=+z[1]; if(n>=1&&n<=6) x.shooter_position=String(n); else info.push("from zone "+n); }
+  if(z){ const n=+z[1];
+    if(trackerUsesUSZones(m,e)&&n>=1&&n<=6) x.shooter_position=String(n);
+    else if(OLD_ZONE_TO_POSITION[n]) x.shooter_position=OLD_ZONE_TO_POSITION[n];
+    else info.push("from Tracker zone "+n); }
   if(action==="shot"){
     const v=low(e.variant)||low(m.shot_type).replace(/ shot$/,"").replace(/ \(5 m\)$/,"");
     if(GT_VARIANT[v]) x.shot_type=GT_VARIANT[v];
