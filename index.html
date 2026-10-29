@@ -1452,11 +1452,12 @@ const GT_WORDS={
   reboundFollowup:{pass_back:"passed back to the goalie",player_keeps:"player keeps it"},
   outletFrom:{save:"after a save",block:"after a block",post:"after a post",rebound_pass_back:"after a rebound passed back",steal:"after a steal",goal_throw:"goal throw restart",manual:""}
 };
-// How a mark says it uses the new US zone numbering (any one is enough); set by XquiX Studio.
-function trackerUsesUSZones(m,e){ const sc=String(e.schema||m.schema||""); const v=parseInt((sc.match(/xgt-mark-(\d+)/)||[])[1]||"1",10);
-  return v>=2||String(e.zoneNumbering||"").toLowerCase()==="us"||e.zoneNumbering===2; }
-// Old Tracker zone -> Game Check position. Empty until XquiX Studio sends the old-to-new table.
-const OLD_ZONE_TO_POSITION={};
+// Tracker zones (XquiX Studio, 29 Oct 2026). Safest: the internal id extra.fieldZone, which never changes.
+// US numbering = water polo positions: 1 right wing … 5 left wing, 6 in front (centre).
+const GT_ZONE_ID={z1:5,z2:4,z3:3,z4:2,z5:1,z6:6,z12:14,z13:13,z14:12};
+const GT_OLD_TO_US={1:5,2:4,3:3,4:2,5:1,6:6,12:14,13:13,14:12};
+function trackerUsesUSZones(m,e){ return String(e.zoneNumbering||"").toLowerCase()==="right1"; }
+function zoneToUS(n,isUS){ n=+n; if(!n) return null; return isUS?n:(GT_OLD_TO_US[n]||null); }
 function normalizeTrackerMark(m){
   const e=(m.extra&&typeof m.extra==="object")?m.extra:{}, low=v=>String(v==null?"":v).trim().toLowerCase();
   const x=Object.assign({},m,{situation:"",shooter_position:"",shot_type:"",shot_direction:"",outcome:""});
@@ -1464,13 +1465,17 @@ function normalizeTrackerMark(m){
   const action=low(e.action)||({shot:"shot",steal:"steal","personal foul":"exclusion",turnover:"turnover","outlet pass":"outlet_pass"}[low(m.situation)]||"");
   const oc=low(e.outcome)||low(m.outcome);
   // where the shot came from: Tracker field zones 1-6 = Game Check positions 1-6
-  // Zones: from the Tracker release with US numbering, zones 1 (right) to 5 (left) and 6 (in front) ARE positions 1-6.
-  // Marks in the older numbering keep their zone as a note until the old-to-new table is known.
-  const z=String(m.shooter_position||"").match(/zone\s*(\d+)/i);
-  if(z){ const n=+z[1];
-    if(trackerUsesUSZones(m,e)&&n>=1&&n<=6) x.shooter_position=String(n);
-    else if(OLD_ZONE_TO_POSITION[n]) x.shooter_position=OLD_ZONE_TO_POSITION[n];
-    else info.push("from Tracker zone "+n); }
+  // shooter position: from the zone id first, else from "Zone <n>" (old numbers converted to US)
+  const isUS=trackerUsesUSZones(m,e), fz=low(e.fieldZone);
+  let zUS=null, zOpp=fz==="oppo";
+  if(fz&&GT_ZONE_ID[fz]!=null) zUS=GT_ZONE_ID[fz];
+  else if(!fz){ const zm=String(m.shooter_position||"").match(/zone\s*(\d+)/i); if(zm) zUS=zoneToUS(zm[1],isUS); }
+  if(action==="shot"){
+    if(zUS>=1&&zUS<=6) x.shooter_position=String(zUS);
+    else if(zUS) info.push("from zone "+zUS);
+    else if(zOpp) info.push("from the opponent’s half");
+    else if(m.shooter_position) info.push("from Tracker "+m.shooter_position);
+  }
   if(action==="shot"){
     const v=low(e.variant)||low(m.shot_type).replace(/ shot$/,"").replace(/ \(5 m\)$/,"");
     if(GT_VARIANT[v]) x.shot_type=GT_VARIANT[v];
@@ -1499,7 +1504,7 @@ function normalizeTrackerMark(m){
     x._spec=GT_PASS[pt]||""; if(!x._spec&&(o.passTypeLabel||o.passType)) info.push(o.passTypeLabel||o.passType);
     if(m.outcome||o.outcomeLabel) info.push("Outlet: "+(o.outcomeLabel||m.outcome));
     const fr=low(o.from); if(w("outletFrom",fr)) info.push(w("outletFrom",fr));
-    if(o.receivedZone!=null&&o.receivedZone!=="") info.push(String(o.receivedZone).toUpperCase()==="OPPO"?"caught in the opponent’s half":"caught in zone "+o.receivedZone);
+    if(o.receivedZone!=null&&o.receivedZone!==""){ const rz=String(o.receivedZone); if(rz.toUpperCase()==="OPPO") info.push("caught in the opponent’s half"); else { const u=zoneToUS(rz,isUS); info.push("caught in zone "+(u||rz)); } }
   }
   else if(action==="exclusion"){ x.outcome="OTHER"; info.push("Personal foul"+(m.outcome?": "+m.outcome:"")); }
   else if(action==="turnover"){ x.outcome="OTHER"; info.push("Turnover"+(m.outcome?": "+m.outcome:"")); }
